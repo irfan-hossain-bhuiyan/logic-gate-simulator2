@@ -10,6 +10,7 @@
 #include <raymath.h>
 #include <stdexcept>
 #include <string>
+#include <vector>
 const std::string TRUE = "TRUE";
 const std::string FALSE = "FalSE";
 using i32 = int;
@@ -18,6 +19,8 @@ using u32 = unsigned int;
 using u64 = unsigned long long;
 using u8 = char;
 using usize = uintptr_t;
+template <typename T> using Vec = std::vector<T>;
+using Rect = Rectangle;
 #define pii pair<int, int>
 #define pb push_back
 #define mp make_pair
@@ -51,6 +54,10 @@ Vector2 operator/(const Vector2 &v, float scalar) {
 }
 Rectangle operator+(const Rectangle &r1, const Vector2 pos) {
   return Rectangle{r1.x + pos.x, r1.y + pos.y, r1.width, r1.height};
+}
+Rectangle rectFromCenter(Vector2 center,float width,float height){
+	Vector2 pos=center-Vector2{width,height}/2;
+	return Rectangle{pos.x,pos.y,width,height};
 }
 
 struct Circle {
@@ -134,16 +141,12 @@ std::vector<std::string> fuzzySearch(const std::string &query,
   return ans;
 }
 Vector2 rect_pos(const Rectangle &rect) { return Vector2{rect.x, rect.y}; }
-void DrawText(std::string text, Vector2 position, int fontSize = 11,
-              Color color = BLACK) {
-  DrawText(text.c_str(), position.x, position.y, fontSize, color);
-}
 void DrawRectangleWithLines(Rectangle rect, Color rect_color = WHITE,
                             Color line_color = BLACK, int width = 3) {
-  DrawRectangleLinesEx(rect, width, line_color);
   DrawRectangleRec(rect, rect_color);
+  DrawRectangleLinesEx(rect, width, line_color);
 }
-const u8 CHARS_MAX_SIZE = 64;
+const u8 CHARS_MAX_SIZE = 128;
 enum Error {
   OVERFLOW_ERROR,
   OUTOFBOUND_ERROR,
@@ -152,8 +155,8 @@ enum Error {
 class Chars {
 public:
   Chars(const char *chars) {
-    end_ptr = core+strlen(chars);
-    if (end_ptr < core+CHARS_MAX_SIZE) {
+    end_ptr = core + strlen(chars);
+    if (end_ptr < core + CHARS_MAX_SIZE) {
       strcpy(core, chars);
     } else {
       throw std::overflow_error("string is greater than CHARS_MAX_SIZE");
@@ -162,15 +165,15 @@ public:
   Chars() { Chars(""); }
   Chars(const Chars &other) {
     strcpy(core, other.core);
-    end_ptr=core+other.length();
+    end_ptr = core + other.length();
   }
   Chars(const std::string &&str) { Chars(c_str()); }
   char *c_str() { return core; }
   Error push_back(char c) {
     if (length() + 1 < CHARS_MAX_SIZE) {
-      *end_ptr=c;
+      *end_ptr = c;
       end_ptr++;
-      *end_ptr='\0';
+      *end_ptr = '\0';
       return OK;
     }
     return OVERFLOW_ERROR;
@@ -180,8 +183,8 @@ public:
       return '\0';
     }
     end_ptr--;
-    auto ans=*end_ptr;
-    *end_ptr='\0';
+    auto ans = *end_ptr;
+    *end_ptr = '\0';
     return ans;
   }
   Error insert(char c, u8 position) {
@@ -191,26 +194,74 @@ public:
     if (position > length())
       return OUTOFBOUND_ERROR; // Out of bound error.
     auto pointer = core + position;
-    memmove(pointer + 1, pointer,end_ptr-pointer);
+    memmove(pointer + 1, pointer, end_ptr - pointer);
     *pointer = c;
     end_ptr++;
-    *end_ptr='\0';
+    *end_ptr = '\0';
     return OK;
   }
   Error erase(u8 position) {
     if (!(position < length()))
       return OUTOFBOUND_ERROR;
     auto pointer = core + position;
-    auto pointer1=pointer+1;
-    memmove(pointer, pointer1,end_ptr-pointer1);
+    auto pointer1 = pointer + 1;
+    memmove(pointer, pointer1, end_ptr - pointer1);
     end_ptr--;
-    *end_ptr='\0';
+    *end_ptr = '\0';
     return OK;
   }
-  u8 length() const { return end_ptr-core; }
-  bool empty() const { return core==end_ptr; }
+  u8 length() const { return end_ptr - core; }
+  bool empty() const { return core == end_ptr; }
 
 private:
   char core[CHARS_MAX_SIZE];
-  char* end_ptr;
+  char *end_ptr;
 };
+Vector2 position(Rectangle rect) { return Vector2{rect.x, rect.y}; }
+Vector2 middle(Rectangle rect) {
+  return position(rect) + Vector2{rect.width, rect.height} / 2;
+}
+void DrawRectangleGradientHRec(Rectangle rect, Color color1, Color color2) {
+  DrawRectangleGradientH(rect.x, rect.y, rect.width, rect.height, color1,
+                         color2);
+}
+void DrawText(std::string text, Vector2 position, int fontSize = 11,
+              Color color = BLACK) {
+  DrawText(text.c_str(), position.x, position.y, fontSize, color);
+}
+void DrawText(Chars text, Vector2 position, int fontSize = 11,
+              Color color = BLACK) {
+  DrawText(text.c_str(), position.x, position.y, fontSize, color);
+}
+
+
+#include <deque>
+template <typename T> class BoundedQueue {
+public:
+  BoundedQueue(size_t max_size) : max_size(max_size) {}
+
+  void push(T item) {
+    if (queue.size() == max_size) {
+      queue.pop_front();
+    }
+    queue.push_back(item);
+  }
+  auto size() { return queue.size(); }
+  int pop() {
+    if (queue.empty()) {
+      return 1;
+    }
+    int front = queue.front();
+    queue.pop_front();
+    return 0;
+  }
+  auto begin() { return queue.begin(); }
+  auto end() { return queue.end(); }
+  auto at(int x) { return queue.at(x); }
+
+private:
+  std::deque<T> queue;
+  size_t max_size;
+};
+
+// Example usage:
