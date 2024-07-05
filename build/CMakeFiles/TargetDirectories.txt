@@ -1,3 +1,0 @@
-/data/data/com.termux/files/home/projects/cse2100_rewrite/build/CMakeFiles/my_program.dir
-/data/data/com.termux/files/home/projects/cse2100_rewrite/build/CMakeFiles/edit_cache.dir
-/data/data/com.termux/files/home/projects/cse2100_rewrite/build/CMakeFiles/rebuild_cache.dir
