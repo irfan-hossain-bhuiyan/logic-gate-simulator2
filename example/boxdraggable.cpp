@@ -1,5 +1,5 @@
-#include "./basic_template.cpp"
-#include "./ui.cpp"
+#include "basic_template.h"
+#include "object.h"
 #include "raylib.h"
 #include "ui.h"
 #include <cstddef>
@@ -8,16 +8,13 @@ int main() {
   const int HEIGHT = 600;
   InitWindow(WIDTH, HEIGHT, "Input test.");
   TouchableCollection tc = TouchableCollection();
-  Vec<Chars> options{"And", "Or", "Not", "Xor", "Nor", "Nand"};
-  SelectBar sb = SelectBar(&tc, options, Vector2{50, 30});
+  auto box=DraggableBox(&tc,{20,20},{30,30},"A");
   while (!WindowShouldClose()) {
     tc.click_update();
-    if (auto a = sb.getClick(); !a.empty()) {
-      Debugger::push_message(a);
-    }
-    BeginDrawing();
+    box.mouseMoveUpdate();
+       BeginDrawing();
     ClearBackground(RAYWHITE);
-    sb.draw();
+    box.draw();
     Debugger::draw();
     EndDrawing();
   }

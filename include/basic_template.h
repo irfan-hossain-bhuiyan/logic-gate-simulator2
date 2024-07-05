@@ -1,0 +1,135 @@
+#pragma once
+#include <cstdint>
+#include <deque>
+#include <raylib.h>
+#include <raymath.h>
+#include <string>
+const std::string TRUE = "TRUE";
+const std::string FALSE = "FalSE";
+using i32 = int;
+using i64 = long long;
+using u32 = unsigned int;
+using u64 = unsigned long long;
+using u8 = char;
+using usize = uintptr_t;
+template <typename T> using Vec = std::vector<T>;
+using Rect = Rectangle;
+const u8 CHARS_MAX_SIZE = 128;
+enum class Error {
+  OVERFLOW_ERROR,
+  OUTOFBOUND_ERROR,
+  OK,
+};
+
+class Chars {
+public:
+  Chars(const char *chars);
+  Chars() : Chars("") {}
+  Chars(const Chars &other);
+  Chars(const std::string &&str) : Chars(str.c_str()) {}
+  char *c_str();
+  char at(int a);
+  operator bool() const;
+  char operator[](int a);
+  Error push_back(char c);
+  char pop_back();
+  Error insert(char c, u8 position);
+  Error erase(u8 position);
+  u8 length() const;
+  bool empty() const;
+  char *begin();
+  char *end();
+
+private:
+  char core[CHARS_MAX_SIZE];
+  char *end_ptr;
+};
+
+Vector2 operator+(const Vector2 &v1, const Vector2 &v2);
+void operator+=(Vector2 &v1, const Vector2 &v2);
+void operator-=(Vector2 &v1, const Vector2 &v2);
+Vector2 operator-(const Vector2 &v1, const Vector2 &v2);
+
+Vector2 operator*(const Vector2 &v, float scalar);
+
+Vector2 operator/(const Vector2 &v, float scalar);
+Rectangle operator+(const Rectangle &r1, const Vector2 pos);
+struct RectSize{
+float width;
+float height;
+RectSize(Vector2 size):width(size.x),height(size.y){}
+RectSize(float width,float height):width(width),height(height){}
+Vector2 toVec2();
+};
+Rectangle rectFromCenter(Vector2 center, float width, float height);
+Rectangle rectFromCenter(Vector2 center, RectSize rectSize);
+Rectangle rectFromPos(Vector2 position, float width, float height);
+Rectangle rectFromPos(Vector2 position, RectSize rectSize);
+struct Circle {
+  Vector2 center;
+  float radius;
+};
+void DrawCircleCir(Circle cir, Color color);
+bool CheckCollisionPointCircle(Vector2 point, Circle cir);
+std::string vectorToString(const std::vector<std::string> &vec);
+
+int levenshteinDistance(const std::string &s1, const std::string &s2);
+int levenshteinDistance(const Chars &s1, const Chars &s2);
+
+// Function to perform fuzzy search in a vector of strings
+
+// Function to perform fuzzy search in a vector of strings
+std::vector<std::string> fuzzySearch(const std::string &query,
+                                     const std::vector<std::string> &vec);
+std::vector<Chars> fuzzySearch(const Chars &query,
+                               const std::vector<Chars> &vec);
+
+Vector2 rect_pos(const Rectangle &rect);
+void drawRectangleWithLines(Rectangle rect, Color rect_color = WHITE,
+                            Color line_color = BLACK, int width = 3);
+Vector2 position(Rectangle rect);
+
+Vector2 middle(Rectangle rect);
+
+void DrawRectangleGradientHRec(Rectangle rect, Color color1, Color color2);
+
+void DrawText(std::string text, Vector2 position, int fontSize = 11,
+              Color color = BLACK);
+
+void DrawText(Chars text, Vector2 position, int fontSize = 11,
+              Color color = BLACK);
+
+template <typename T> class BoundedQueue {
+public:
+  BoundedQueue(size_t max_size) : max_size(max_size) {}
+
+  void push(T item);
+  int size();
+  Error pop();
+  auto begin();
+  auto end();
+  T at(int x);
+
+private:
+  std::deque<T> queue;
+  size_t max_size;
+};
+template <typename T> void BoundedQueue<T>::push(T item) {
+  if (queue.size() == max_size) {
+    queue.pop_front();
+  }
+  queue.push_back(item);
+}
+template <typename T> int BoundedQueue<T>::size() { return queue.size(); }
+template <typename T> Error BoundedQueue<T>::pop() {
+  if (queue.empty()) {
+    return Error::OUTOFBOUND_ERROR;
+  }
+  int front = queue.front();
+  queue.pop_front();
+  return Error::OK;
+}
+template <typename T> auto BoundedQueue<T>::begin() { return queue.begin(); }
+template <typename T> auto BoundedQueue<T>::end() { return queue.end(); }
+template <typename T> T BoundedQueue<T>::at(int x) { return queue.at(x); }
+

@@ -14,4 +14,5 @@ int main(){
 	print_c1();
 	c.insert('b', 4);
 	print_c1();
+	
 }	
