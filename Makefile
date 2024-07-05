@@ -28,7 +28,7 @@ all: $(TARGET)
 
 # Link object files to create the final executable
 $(TARGET): $(OBJECTS)
-	$(CXX) $(CXXFLAGS) -o $@ $^ -lraylib -opengl 
+	$(CXX) $(CXXFLAGS)  $^ -lraylib -opengl -o $@
 
 # Compile .cpp files to .o files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp

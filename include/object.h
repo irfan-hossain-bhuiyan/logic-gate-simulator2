@@ -4,7 +4,7 @@
 #include <raylib.h>
 class Draggable :public Touchable {
 private:
-  bool is_dragging;
+  bool is_dragging=false;
   Vector2 mouseRelative; // Mouse relative position with the object
 
 public:
