@@ -1,7 +1,7 @@
 [
 {
   "directory": "/data/data/com.termux/files/home/projects/cse2100_rewrite/build",
-  "command": "/data/data/com.termux/files/usr/bin/c++  -I/data/data/com.termux/files/home/projects/cse2100_rewrite/include -g -std=gnu++17 -o CMakeFiles/my_program.dir/src/ui.cpp.o -c /data/data/com.termux/files/home/projects/cse2100_rewrite/src/ui.cpp",
+  "command": "clang++ -std=c++17 -Iinclude -lraylib -opengl main.cpp",
   "file": "/data/data/com.termux/files/home/projects/cse2100_rewrite/src/ui.cpp",
   "output": "CMakeFiles/my_program.dir/src/ui.cpp.o"
 }

@@ -27,7 +27,7 @@ void Touchable::add_to(TouchableCollection *tc) {
   child_to = tc;
   tc->push_back(this);
 }
-bool Touchable::is_clickedone() {
+bool Touchable::is_clicked() {
   return is_selected() &&
          IsMouseButtonPressed(MOUSE_BUTTON_LEFT); // This works because for
                                                   // each frame if MousePressed
@@ -154,7 +154,7 @@ void SelectBar::draw() {
   }
 }
 Chars SelectBar::getClick() {
-  if (is_clickedone()) {
+  if (is_clicked()) {
     int highlighted = (GetMouseY() - position.y) / rectSize.height;
     return options[highlighted];
   }

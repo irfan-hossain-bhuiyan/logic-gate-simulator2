@@ -279,3 +279,6 @@ void DrawText(Chars text, Vector2 position, int fontSize, Color color) {
 }
 
 // Example usage:
+void DrawCircleLinesCir(Circle cir, Color color, float width) {
+  DrawRing(cir.center, cir.radius, cir.radius + width, 0.0, 360.0, 0, color);
+}

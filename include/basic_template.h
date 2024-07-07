@@ -4,8 +4,6 @@
 #include <raylib.h>
 #include <raymath.h>
 #include <string>
-const std::string TRUE = "TRUE";
-const std::string FALSE = "FalSE";
 using i32 = int;
 using i64 = long long;
 using u32 = unsigned int;
@@ -18,10 +16,13 @@ const u8 CHARS_MAX_SIZE = 128;
 enum class Error {
   OVERFLOW_ERROR,
   OUTOFBOUND_ERROR,
+  ITEMNOTFOUND_ERROR,
   OK,
 };
 
 class Chars {
+  // Chars are array of character,That are stack allocated,Each heap allocated
+  // String is not worth it
 public:
   Chars(const char *chars);
   Chars() : Chars("") {}
@@ -35,8 +36,8 @@ public:
   char pop_back();
   Error insert(char c, u8 position);
   Error erase(u8 position);
-  u8 length() const;
-  bool empty() const;
+  [[nodiscard]] u8 length() const;
+  [[nodiscard]] bool empty() const;
   char *begin();
   char *end();
 
@@ -54,12 +55,12 @@ Vector2 operator*(const Vector2 &v, float scalar);
 
 Vector2 operator/(const Vector2 &v, float scalar);
 Rectangle operator+(const Rectangle &r1, const Vector2 pos);
-struct RectSize{
-float width;
-float height;
-RectSize(Vector2 size):width(size.x),height(size.y){}
-RectSize(float width,float height):width(width),height(height){}
-Vector2 toVec2();
+struct RectSize {
+  float width;
+  float height;
+  RectSize(Vector2 size) : width(size.x), height(size.y) {}
+  RectSize(float width, float height) : width(width), height(height) {}
+  Vector2 toVec2();
 };
 Rectangle rectFromCenter(Vector2 center, float width, float height);
 Rectangle rectFromCenter(Vector2 center, RectSize rectSize);
@@ -92,7 +93,7 @@ Vector2 position(Rectangle rect);
 Vector2 middle(Rectangle rect);
 
 void DrawRectangleGradientHRec(Rectangle rect, Color color1, Color color2);
-
+void DrawCircleLinesCir(Circle cir, Color color, float width);
 void DrawText(std::string text, Vector2 position, int fontSize = 11,
               Color color = BLACK);
 
@@ -132,4 +133,13 @@ template <typename T> Error BoundedQueue<T>::pop() {
 template <typename T> auto BoundedQueue<T>::begin() { return queue.begin(); }
 template <typename T> auto BoundedQueue<T>::end() { return queue.end(); }
 template <typename T> T BoundedQueue<T>::at(int x) { return queue.at(x); }
-
+template <typename T> Error erase(Vec<T> &vec, T item) {
+  auto it = std::find(vec.begin(), vec.end(), item);
+  if (it == vec.end()) {
+    return Error::ITEMNOTFOUND_ERROR;
+  }
+  else{
+	vec.erase(it);
+	return Error::OK;
+  }
+}

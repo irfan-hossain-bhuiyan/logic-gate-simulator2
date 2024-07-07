@@ -3,7 +3,7 @@
 CXX = clang++
 
 # Compiler flags
-CXXFLAGS =  -std=c++17 -Iinclude
+CXXFLAGS =  -std=c++20 -Iinclude
 
 # Source directory
 SRC_DIR = src

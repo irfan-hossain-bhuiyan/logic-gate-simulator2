@@ -1,9 +1,10 @@
 #include "object.h"
 #include "basic_template.h"
 #include <raylib.h>
+bool Draggable::isDraggable() { return true; }
 void Draggable::mouseMoveUpdate() {
-  {//Updating is_dragging and mouse_relative field feild
-    if (is_clickedone()) {
+  { // Updating is_dragging and mouse_relative field feild
+    if (is_clickedone() && isDraggable()) {
       if (!is_dragging) {
         is_dragging = true;
         mouseRelative = NodePos - GetMousePosition();

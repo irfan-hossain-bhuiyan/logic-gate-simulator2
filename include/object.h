@@ -10,6 +10,7 @@ private:
 public:
   Vector2 NodePos;
   void mouseMoveUpdate();
+  virtual bool isDraggable();
   Draggable(TouchableCollection *tc, Vector2 nodePos)
       : Touchable(tc), NodePos(nodePos) {}
 };

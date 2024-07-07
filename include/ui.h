@@ -16,9 +16,9 @@ public:
   bool is_touching();
   bool is_selected();
   bool is_clicking();
-  bool is_clickedone();
+  bool is_clicked();
   void add_to(TouchableCollection *tc);
-
+  TouchableCollection* get_tc(){return child_to;}
 private:
   TouchableCollection *child_to = nullptr;
   friend class TouchableCollection;
@@ -32,7 +32,7 @@ private:
 
   void push_back(Touchable *touchable);
   void erase(Touchable *touchable);
-
+  bool no_selected(){return last_click==nullptr;}
 public:
   void click_update();
   friend class Touchable;
