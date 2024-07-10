@@ -22,8 +22,8 @@ private:
   Chars label = "";
 
 public:
-  DraggableBox(TouchableCollection *tc, Vector2 position, RectSize rectSize={30,40}, Chars label = "")
+  DraggableBox(TouchableCollection *tc, Vector2 position, RectSize rectSize={30,40}, const Chars& label = "")
       : Draggable(tc, position), rectSize(rectSize), label(label) {}
-  bool CollisionPoint(Vector2 position) override;
+  bool checkPointCollision(Vector2 position) override;
   void draw();
 };

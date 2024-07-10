@@ -1,23 +1,25 @@
 #include "basic_template.h"
 #include "raylib.h"
 #include "ui.h"
+#include "gate.h"
 #include <cstddef>
 int main() {
   const int WIDTH = 800;
   const int HEIGHT = 600;
+  
   InitWindow(WIDTH, HEIGHT, "Input test.");
   TouchableCollection tc = TouchableCollection();
-  Vec<Chars> options{"And", "Or", "Not", "Xor", "Nor", "Nand"};
-  auto sb = SearchBar(&tc, Vector2{30, 40}, options);
+  Gate andGate=Gate(&tc,{12,12});
+  Gate notGate=Gate(&tc,{10,10},1);
   while (!WindowShouldClose()) {
     tc.click_update();
-    sb.CharUpdate();
-    if (auto a = sb.getClick()) {
-      Debugger::push_message(a);
-    }
+    andGate.mouseMoveUpdate();
+    notGate.mouseMoveUpdate();
+    Spline::SplinesDraw();
     BeginDrawing();
     ClearBackground(RAYWHITE);
-    sb.draw();
+    andGate.draw();
+    notGate.draw();
     Debugger::draw();
     EndDrawing();
   }

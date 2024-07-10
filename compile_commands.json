@@ -1,8 +1,8 @@
 [
 {
-  "directory": "/data/data/com.termux/files/home/projects/cse2100_rewrite/build",
-  "command": "clang++ -std=c++17 -Iinclude -lraylib -opengl main.cpp",
-  "file": "/data/data/com.termux/files/home/projects/cse2100_rewrite/src/ui.cpp",
-  "output": "CMakeFiles/my_program.dir/src/ui.cpp.o"
+  "directory": "/data/data/com.termux/files/home/projects/cse2100_rewrite/",
+  "command": "clang++ -std=c++20 -Iinclude -lraylib -opengl main.cpp",
+  "file": "/data/data/com.termux/files/home/projects/cse2100_rewrite/src/main.cpp",
+  "output": "CMakeFiles/my_program.dir/src/main.o"
 }
 ]

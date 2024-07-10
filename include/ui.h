@@ -9,7 +9,7 @@ class TouchableCollection;
 
 class Touchable {
 public:
-  virtual bool CollisionPoint(Vector2 pos) = 0;
+  virtual bool checkPointCollision(Vector2 pos) = 0;
   Touchable(TouchableCollection *tc);
   virtual ~Touchable();
 
@@ -50,7 +50,7 @@ private:
   void move_input();
   bool char_input();
   std::tuple<Chars, Color> rendered_text();
-  bool CollisionPoint(Vector2 pos) override;
+  bool checkPointCollision(Vector2 pos) override;
 
 public:
   InputBar(TouchableCollection *tc, Rectangle rect);
@@ -80,7 +80,7 @@ public:
   Label label;
 
 private:
-  bool CollisionPoint(Vector2 pos) override;
+  bool checkPointCollision(Vector2 pos) override;
   void draw();
 
 public:
@@ -104,7 +104,7 @@ public:
       : Touchable(tc), options(options), position(pos), rectSize(rectSize) {}
 
 private:
-  bool CollisionPoint(Vector2 pos) override;
+  bool checkPointCollision(Vector2 pos) override;
 
 public:
   void draw();
@@ -118,7 +118,7 @@ private:
   Vec<Chars> filtered_options;
 
 public:
-  SearchBar(TouchableCollection *tc, Vector2 position, Vec<Chars> options,
+  SearchBar(TouchableCollection *tc, Vector2 position, const Vec<Chars>& options,
             int fontSize = 11, float width = 50, float height = 30)
       : ib(tc, rectFromPos(position, width, height)),
         sb(tc, position + Vector2{0, height}, options, width, height),

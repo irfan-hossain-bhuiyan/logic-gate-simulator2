@@ -126,14 +126,13 @@ template <typename T> Error BoundedQueue<T>::pop() {
   if (queue.empty()) {
     return Error::OUTOFBOUND_ERROR;
   }
-  int front = queue.front();
   queue.pop_front();
   return Error::OK;
 }
 template <typename T> auto BoundedQueue<T>::begin() { return queue.begin(); }
 template <typename T> auto BoundedQueue<T>::end() { return queue.end(); }
 template <typename T> T BoundedQueue<T>::at(int x) { return queue.at(x); }
-template <typename T> Error erase(Vec<T> &vec, T item) {
+template <typename T> Error eraseItem(Vec<T> &vec,const T item) {
   auto it = std::find(vec.begin(), vec.end(), item);
   if (it == vec.end()) {
     return Error::ITEMNOTFOUND_ERROR;
@@ -143,3 +142,4 @@ template <typename T> Error erase(Vec<T> &vec, T item) {
 	return Error::OK;
   }
 }
+

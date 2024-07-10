@@ -4,7 +4,7 @@
 bool Draggable::isDraggable() { return true; }
 void Draggable::mouseMoveUpdate() {
   { // Updating is_dragging and mouse_relative field feild
-    if (is_clickedone() && isDraggable()) {
+    if (is_clicked() && isDraggable()) {
       if (!is_dragging) {
         is_dragging = true;
         mouseRelative = NodePos - GetMousePosition();
@@ -18,7 +18,7 @@ void Draggable::mouseMoveUpdate() {
     NodePos = GetMousePosition() + mouseRelative;
   }
 }
-bool DraggableBox::CollisionPoint(Vector2 position) {
+bool DraggableBox::checkPointCollision(Vector2 position) {
   return CheckCollisionPointRec(position, rectFromPos(NodePos, rectSize));
 }
 void DraggableBox::draw() {

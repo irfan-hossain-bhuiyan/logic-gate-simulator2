@@ -48,7 +48,7 @@ void TouchableCollection::click_update() {
   touching = nullptr;
   auto mouse_pos = GetMousePosition();
   for (auto x : touchables) {
-    if (x->CollisionPoint(mouse_pos)) {
+    if (x->checkPointCollision(mouse_pos)) {
       touching = x;
       break;
     }
@@ -93,7 +93,7 @@ std::tuple<Chars, Color> InputBar::rendered_text() {
   text.insert('|', cursor_position);
   return std::tuple(text, BLACK);
 }
-bool InputBar::CollisionPoint(Vector2 pos) {
+bool InputBar::checkPointCollision(Vector2 pos) {
   return CheckCollisionPointRec(pos, rect);
 }
 
@@ -130,12 +130,12 @@ void Label::draw(int linewidth) {
   Vector2 text_pos = center - Vector2{text_width, text_height} / 2;
   DrawText(text, text_pos, font_size, BLACK);
 }
-bool Button::CollisionPoint(Vector2 pos) {
+bool Button::checkPointCollision(Vector2 pos) {
   return CheckCollisionPointRec(pos, label.rect);
 }
 void Button::draw() { label.draw(is_touching() ? 2 : 1); }
 
-bool SelectBar::CollisionPoint(Vector2 pos) {
+bool SelectBar::checkPointCollision(Vector2 pos) {
   Rectangle colrec = Rectangle{position.x, position.y, rectSize.width,
                                rectSize.height * options.size()};
   return CheckCollisionPointRec(pos, colrec);
