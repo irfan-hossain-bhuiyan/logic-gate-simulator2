@@ -1,4 +1,5 @@
 #include "basic_template.h"
+#include <algorithm>
 #include <cstring>
 #include <queue>
 #include <raylib.h>
@@ -7,21 +8,25 @@
 #include <string>
 Chars::Chars(const char *chars) {
   // Endptr is the ptr to the \0.
-  auto str_len = strlen(chars);
-  end_ptr = core + str_len;
-  if (end_ptr < core + CHARS_MAX_SIZE) {
-    strcpy(core, chars);
+  usize str_len = strlen(chars);
+  end_ptr = core.begin() + str_len;
+  if (end_ptr < core.begin() + CHARS_MAX_SIZE) {
+    std::copy(chars, chars + str_len, core.begin());
   } else {
     throw std::overflow_error(
         "string is greater than CHARS_MAX_SIZE. String is of length" +
         std::to_string(str_len));
   }
+  *end_ptr='\0';
 }
-Chars::Chars(const Chars &other) {
-  strcpy(core, other.core);
-  end_ptr = core + other.length();
+Chars::Chars(const Chars &other) noexcept {
+  std::copy(other.begin(), other.end(), this->begin());
+  end_ptr = core.begin() + other.length();
+  *end_ptr='\0';
 }
-char *Chars::c_str() { return core; }
+
+char *Chars::c_str() { return core.data(); }
+const char *Chars::c_str()const{return core.data();}
 char Chars::at(int a) {
   if (0 <= a && a < length()) {
     return core[a];
@@ -60,7 +65,7 @@ Error Chars::insert(char c, u8 position) {
   }
   if (position > length())
     return Error::OUTOFBOUND_ERROR; // Out of bound error.
-  auto pointer = core + position;
+  auto pointer = core.begin() + position;
   memmove(pointer + 1, pointer, end_ptr - pointer);
   *pointer = c;
   end_ptr++;
@@ -70,17 +75,21 @@ Error Chars::insert(char c, u8 position) {
 Error Chars::erase(u8 position) {
   if (!(position < length()))
     return Error::OUTOFBOUND_ERROR;
-  auto pointer = core + position;
+  auto pointer = core.begin() + position;
   auto pointer1 = pointer + 1;
   memmove(pointer, pointer1, end_ptr - pointer1);
   end_ptr--;
   *end_ptr = '\0';
   return Error::OK;
 }
-u8 Chars::length() const { return end_ptr - core; }
-bool Chars::empty() const { return core == end_ptr; }
-char *Chars::begin() { return core; }
-char *Chars::end() { return end_ptr; }
+u8 Chars::length() const { return this->end_ptr - this->begin(); }
+bool Chars::empty() const { return this->begin() == this->end_ptr; }
+Chars::Iterator Chars::begin() { return core.begin(); }
+Chars::Iterator Chars::end() { return end_ptr; }
+
+Chars::CIterator Chars::begin() const { return core.cbegin(); }
+
+Chars::CIterator Chars::end() const { return end_ptr; }
 
 Vector2 operator+(const Vector2 &v1, const Vector2 &v2) {
   return Vector2Add(v1, v2);
@@ -146,21 +155,21 @@ int levenshteinDistance(const std::string &s1, const std::string &s2) {
   std::transform(lowerS1.begin(), lowerS1.end(), lowerS1.begin(), ::tolower);
   std::transform(lowerS2.begin(), lowerS2.end(), lowerS2.begin(), ::tolower);
 
-  int len1 = lowerS1.length();
-  int len2 = lowerS2.length();
+  usize len1 = lowerS1.length();
+  usize len2 = lowerS2.length();
 
   std::vector<std::vector<int>> matrix(len1 + 1, std::vector<int>(len2 + 1));
 
-  for (int i = 0; i <= len1; ++i) {
+  for (usize i = 0; i <= len1; ++i) {
     matrix[i][0] = i;
   }
 
-  for (int j = 0; j <= len2; ++j) {
+  for (usize j = 0; j <= len2; ++j) {
     matrix[0][j] = j;
   }
 
-  for (int i = 1; i <= len1; ++i) {
-    for (int j = 1; j <= len2; ++j) {
+  for (usize i = 1; i <= len1; ++i) {
+    for (usize j = 1; j <= len2; ++j) {
       int cost = (lowerS1[i - 1] == lowerS2[j - 1]) ? 0 : 1;
       matrix[i][j] = std::min({matrix[i - 1][j] + 1, matrix[i][j - 1] + 1,
                                matrix[i - 1][j - 1] + cost});
@@ -259,7 +268,7 @@ std::vector<Chars> fuzzySearch(const Chars &query,
 
 Vector2 rect_pos(const Rectangle &rect) { return Vector2{rect.x, rect.y}; }
 void drawRectangleWithLines(Rectangle rect, Color rect_color, Color line_color,
-                            int width) {
+                            float width) {
   DrawRectangleRec(rect, rect_color);
   DrawRectangleLinesEx(rect, width, line_color);
 }
@@ -281,4 +290,13 @@ void DrawText(Chars text, Vector2 position, int fontSize, Color color) {
 // Example usage:
 void DrawCircleLinesCir(Circle cir, Color color, float width) {
   DrawRing(cir.center, cir.radius, cir.radius + width, 0.0, 360.0, 0, color);
+}
+auto Chars::operator<=>(const Chars& ch) const{
+	return std::lexicographical_compare(this->begin(),this->end(),ch.begin(),ch.end());
+}
+
+
+std::ostream& operator<<(std::ostream& os,const Chars& ch){
+	os<<ch.c_str();
+	return os;
 }

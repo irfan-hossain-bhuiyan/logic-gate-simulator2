@@ -5,37 +5,42 @@
 #include <raylib.h>
 #include <unordered_set>
 enum class GatePointState { in, out };
-class Spline;
-class Gate;
+class m_Spline;
+class m_Gate;
+using Gate = Box<m_Gate>;
+using Gates=Vec<Gate>;
 using GPs = GatePointState;
-
 // GatePoint is a helper class.
 // It is clickable.
 // It follows Gate.So gatepoint is a child.
 // It takes a spline.
-template <GPs STATE> class GatePoint;
-
+template <GPs STATE> class m_GatePoint;
+template <GPs STATE> using GatePoint = m_GatePoint<STATE>;
 // Because both of them are mutable reference of the function
-template <GPs STATE> void attach(GatePoint<STATE> &gp, Spline &sp);
-template <GPs STATE> void detach(GatePoint<STATE> &gp, Spline &sp);
+template <GPs STATE> void attach(m_GatePoint<STATE> &gp, m_Spline &sp);
+template <GPs STATE> void detach(m_GatePoint<STATE> &gp, m_Spline &sp);
 // It just detach pointer.Don't delete anything.
 //
 //
-template <GatePointState STATE> class GatePoint : Touchable {
-  constexpr static float RADIUS = 3;
-  const Gate &gate;
+template <GatePointState STATE> class m_GatePoint : Touchable {
+  constexpr static float RADIUS = 3.0;
+  constexpr static float OUTLINE = 2.0;
+  const m_Gate &_gate;
   Vector2 relativePos;
-  Vec<Spline *> splines;
-
+  Vec<m_Spline *> splines;
   Vector2 _world_pos();
   Circle _cir();
-  bool checkPointCollision(Vector2 pos) override {
-    return CheckCollisionPointCircle(pos, _cir());
-  }
+  bool _is_disconnected();
+  bool checkPointCollision(Vector2 pos) override;
+  m_GatePoint(const m_GatePoint &gp) = delete;
+  m_GatePoint(const m_GatePoint &&gp) = delete;
 
 public:
-  GatePoint(Gate &gate);
-  void draw();
+  bool booleanState = false;
+  m_GatePoint(const m_Gate &gate);
+  void _draw();
+  m_Spline *get_spline()
+    requires(STATE == GPs::in);
   // void addSpline(Spline *const spline);
   // void removeSpline(Spline const *spline)
   //  requires(STATE == GPs::out);
@@ -43,100 +48,137 @@ public:
   // void removeSpline()
   //  requires(STATE == GPs::in);
 
-  void setRelativePos(Vector2 pos) { relativePos = pos; }
-
-  void onClick();
-  template <GPs S> friend void attach(GatePoint<S> &gp, Spline &sp);
-  template <GPs S> friend void detach(GatePoint<S> &gp, Spline &sp);
-  friend Spline;
+  void _setRelativePos(Vector2 pos) { relativePos = pos; }
+  void _update();
+  void _onClick();
+  template <GPs S> friend void attach(m_GatePoint<S> &gp, m_Spline &sp);
+  template <GPs S> friend void detach(m_GatePoint<S> &gp, m_Spline &sp);
+  friend m_Spline;
+  friend m_Gate;
 };
-using IGP = GatePoint<GPs::in>;
+using m_IGP = m_GatePoint<GPs::in>;
+using IGP = Box<m_IGP>;
 using IGPs = Vec<IGP>;
-using OGP = GatePoint<GPs::out>;
+using m_OGP = m_GatePoint<GPs::out>;
+using OGP = Box<m_OGP>;
 using OGPs = Vec<OGP>;
 
 // Spline connected tow gatePoint.
 // It is like wire.
-class Spline {
-  static std::unordered_set<Spline *> SPLINES;
+class m_Spline {
+  static std::unordered_set<m_Spline *> SPLINES;
   constexpr static float SPLINE_THICKNESS = 5;
-  constexpr static float BORDER = 1;
-
+  constexpr static float BORDER = 3;
+  constexpr static float BEZIER_POINT=50;
 private:
-  IGP *_in_ptr;
-  OGP *_out_ptr;
+  m_IGP *_in_ptr;
+  m_OGP *_out_ptr;
+  m_Spline(const m_Spline &s) = delete;
+  m_Spline(const m_Spline &&s) = delete;
 
 public:
-  static Spline *CURRENT_SPLINE;
-  static bool mouse_empty() { return CURRENT_SPLINE == nullptr; }
-  static void SplinesDraw() {
-    for (auto x : SPLINES) {
-      x->draw();
-    }
-  }
-  Spline(IGP *in_ptr, OGP *out_ptr);
-  ~Spline();
+  static m_Spline *CURRENT_SPLINE;
+  static bool mouse_empty();
+  static void SplinesDraw();
+  m_Spline(m_IGP *in_ptr, m_OGP *out_ptr);
+  ~m_Spline();
 
-  void draw() {
-    DrawLineBezier(_in_ptr->_world_pos(), _out_ptr->_world_pos(),
-                   SPLINE_THICKNESS - BORDER, WHITE);
-    DrawLineBezier(_in_ptr->_world_pos(), _out_ptr->_world_pos(),
-                   SPLINE_THICKNESS, BLACK);
-  }
-  friend Gate;
-  friend IGP;
-  friend OGP;
-  template <GPs STATE> friend void attach(GatePoint<STATE> &gp, Spline &sp);
-  template <GPs STATE> friend void detach(GatePoint<STATE> &gp, Spline &sp);
+  void draw();
+  friend m_Gate;
+  friend m_IGP;
+  friend m_OGP;
+  template <GPs STATE> friend void attach(m_GatePoint<STATE> &gp, m_Spline &sp);
+  template <GPs STATE> friend void detach(m_GatePoint<STATE> &gp, m_Spline &sp);
 };
 
 // Gate is movable.
 // It has gatepoint.That can be connected to spline.
 // It is the main class
 // GatePoint is a helper class.
-class Gate : public Draggable {
+class m_Gate : public Draggable {
   constexpr static float MIN_POINT_DISTANCE = 10;
-  constexpr static float WIDTH = 20;
-  constexpr static float MIN_HEIGHT = 40;
-  constexpr static float CIRCLE_RADIUS = 3;
-  void onClick();
-  IGP &_addGatePoint();
-  bool checkPointCollision(Vector2 pos) override {
-    return CheckCollisionPointRec(pos, _rect());
-  }
 
 public:
   void draw();
-  Gate(TouchableCollection *tc, Vector2 pos) : Draggable(tc, pos) {}
-  Gate(TouchableCollection *tc, Vector2 pos, int inPointnrMin)
-      : Draggable(tc, pos), _inPointnrMin(inPointnrMin) {}
+  virtual void circuitUpdate() = 0;
+  void update();
 
-  Gate(TouchableCollection *tc, Vector2 pos, const Chars &&text,
-       int inPointnrMin, int outPointnrMin)
+  m_Gate(TouchableCollection *tc, Vector2 pos, const Chars &text,
+         usize inPointnrMin, usize outPointnrMin, bool dynamicInput)
       : Draggable(tc, pos), _inPointnrMin(inPointnrMin),
-        _outPointnrMin(outPointnrMin), _text(text) {}
-  Gate(TouchableCollection *tc, Vector2 pos, const Chars &&text)
-      : Draggable(tc, pos), _text(text) {}
+        _outPointnr(outPointnrMin), _dynamicInput(dynamicInput), _text(text) {
+    _init();
+  }
+  m_Gate(const m_Gate &mg) = delete;
+  m_Gate(const m_Gate &&mg) = delete;
 
-private:
-  const int _inPointnrMin = 2;
-  const int _outPointnrMin = 1;
-  Chars _text;
+protected:
   IGPs _inPoints;
   OGPs _outPoints;
 
+private:
+  const usize _inPointnrMin = 2;
+  const usize _outPointnr = 1;
+  const float WIDTH = 30;
+  const float MIN_HEIGHT = 40;
+  const bool _dynamicInput = true;
+  Chars _text = "";
+  void _init();
+  void _refresh();
+  void _resizePoint();
+  void _clearPoint();
+  float _inPointDistance();
+  float _outPointDistance();
   usize _inPointnr();
-  usize _outPointnr();
   float _rectHeight();
   RectSize _rectsize();
   Rect _rect();
-  void _drawPoint(Vector2 point);
+  void _onClick();
+  IGP &_addGatePoint();
+  bool checkPointCollision(Vector2 pos) override;
+
   friend IGP;
   friend OGP;
-  template <GPs S> friend void attach(GatePoint<S> &gp, Spline &sp);
-  template <GPs S> friend void detach(GatePoint<S> &gp, Spline &sp);
+  template <GPs S> friend void attach(m_GatePoint<S> &gp, m_Spline &sp);
+  template <GPs S> friend void detach(m_GatePoint<S> &gp, m_Spline &sp);
+};
+class AndGate : public m_Gate {
+public:
+  AndGate(TouchableCollection *tc, Vector2 pos, Chars &&text = "")
+      : m_Gate(tc, pos, text, 2, 1, true) {}
+  void circuitUpdate() override final {
+    bool output = true;
+    for (auto &x : _inPoints) {
+      output ^= x->booleanState;
+    }
+    _outPoints.front()->booleanState = output;
+  }
+};
+class OrGate : public m_Gate {
+public:
+  OrGate(TouchableCollection *tc, Vector2 pos, Chars &&text = "")
+      : m_Gate(tc, pos, text, 2, 1, true) {}
+  void circuitUpdate() override final {
+    bool output = false;
+    for (auto &x : _inPoints) {
+      output |= x->booleanState;
+    }
+    _outPoints.front()->booleanState = output;
+  }
 };
 
+class NotGate : public m_Gate {
+public:
+  void circuitUpdate() override final {
+    bool output = true;
+    for (auto &x : _inPoints) {
+      output ^= x->booleanState;
+    }
+    _outPoints.front()->booleanState = output;
+  }
+
+public:
+  NotGate(TouchableCollection *tc, Vector2 pos, const Chars &text = "")
+      : m_Gate(tc, pos, text, 1, 1, false) {}
+};
 // Here are the functions
-
-
