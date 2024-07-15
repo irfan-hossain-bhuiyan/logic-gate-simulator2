@@ -1,6 +1,6 @@
 #pragma once
 #include "basic_template.h"
-#include "ui.h"
+#include <raylib.h>
 namespace GameManager {
 void updateEvent();
 namespace Debugger {
@@ -9,10 +9,10 @@ void push_message(const Chars &text);
 void draw();
 } // namespace Debugger
 namespace UI::Menu_Options {
-const Chars MAIN = "MAIN";
+const Chars MOUSE_TOGGLE = "MOUSE TOGGLE";
 const Chars DELETE = "DELETE";
 const Chars CREATE = "CREATE";
-const Vec<Chars> MENU = {MAIN, DELETE, CREATE};
+//const Vec<Chars> MENU = {MOUSE_TOGGLE, DELETE, CREATE};
 } // namespace UI::Menu_Options
 namespace GateName {
 const Chars AND = "AND ";
@@ -20,7 +20,7 @@ const Chars OR = "OR";
 const Chars NOT = "NOT";
 const Chars LIGHT = "LIGHT";
 const Chars SWITCH = "SWITCH";
-const Vec<Chars> GATES_NAME = {AND, OR, NOT};
+const Vec<Chars> GATES_NAME = {AND, OR, NOT, LIGHT, SWITCH};
 } // namespace GateName
 
 namespace UI {
@@ -40,14 +40,14 @@ void draw();
 void update();
 } // namespace UI
 namespace GateWindow {
-enum class MouseState{
-	editing,
-	running,
+enum class MouseState {
+  editing,
+  running,
 };
+Camera2D getCamera();
 bool isMouseState(MouseState mouseState);
 void draw();
 void update();
 void create_gate(const Chars &gate);
-
 } // namespace GateWindow
 } // namespace GameManager

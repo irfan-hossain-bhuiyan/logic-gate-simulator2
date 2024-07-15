@@ -17,16 +17,16 @@ Chars::Chars(const char *chars) {
         "string is greater than CHARS_MAX_SIZE. String is of length" +
         std::to_string(str_len));
   }
-  *end_ptr='\0';
+  *end_ptr = '\0';
 }
 Chars::Chars(const Chars &other) noexcept {
   std::copy(other.begin(), other.end(), this->begin());
   end_ptr = core.begin() + other.length();
-  *end_ptr='\0';
+  *end_ptr = '\0';
 }
 
 char *Chars::c_str() { return core.data(); }
-const char *Chars::c_str()const{return core.data();}
+const char *Chars::c_str() const { return core.data(); }
 char Chars::at(int a) {
   if (0 <= a && a < length()) {
     return core[a];
@@ -280,7 +280,8 @@ void DrawRectangleGradientHRec(Rectangle rect, Color color1, Color color2) {
   DrawRectangleGradientH(rect.x, rect.y, rect.width, rect.height, color1,
                          color2);
 }
-void DrawText(std::string text, Vector2 position, int fontSize, Color color) {
+void DrawText(const std::string &text, Vector2 position, int fontSize,
+              Color color) {
   DrawText(text.c_str(), position.x, position.y, fontSize, color);
 }
 void DrawText(Chars text, Vector2 position, int fontSize, Color color) {
@@ -290,14 +291,20 @@ void DrawText(Chars text, Vector2 position, int fontSize, Color color) {
 void DrawCircleLinesCir(Circle cir, Color color, float width) {
   DrawRing(cir.center, cir.radius, cir.radius + width, 0.0, 360.0, 0, color);
 }
-auto Chars::operator<=>(const Chars& ch) const{
-	return std::lexicographical_compare(this->begin(),this->end(),ch.begin(),ch.end());
+auto Chars::operator<=>(const Chars &ch) const {
+  return std::lexicographical_compare(this->begin(), this->end(), ch.begin(),
+                                      ch.end());
 }
-bool Chars::operator==(const Chars&ch)const{
-	return std::equal(this->begin(),this->end(),ch.begin());
+bool Chars::operator==(const Chars &ch) const {
+  return std::equal(this->begin(), this->end(), ch.begin());
 }
-
-std::ostream& operator<<(std::ostream& os,const Chars& ch){
-	os<<ch.c_str();
-	return os;
+Chars &Chars::operator=(const Chars &ch) noexcept {
+  std::copy(ch.begin(), ch.end(), this->begin());
+  end_ptr = this->begin() + ch.length();
+  *end_ptr = '\0';
+  return *this;
+}
+std::ostream &operator<<(std::ostream &os, const Chars &ch) {
+  os << ch.c_str();
+  return os;
 }

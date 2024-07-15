@@ -13,7 +13,9 @@ int main() {
     GateWindow::update();
     BeginDrawing();
     ClearBackground(RAYWHITE);
+    BeginMode2D(GateWindow::getCamera());
     GateWindow::draw();
+    EndMode2D();
     UI::draw();
     Debugger::draw();
     EndDrawing();

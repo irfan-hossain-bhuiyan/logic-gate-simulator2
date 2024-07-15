@@ -1,21 +1,26 @@
-#include "basic_template.h"
-#include "object.h"
-#include "raylib.h"
 #include "ui.h"
+#include "basic_template.h"
+#include "globals.h"
+#include "raylib.h"
 #include <cstddef>
 int main() {
   const int WIDTH = 800;
   const int HEIGHT = 600;
   InitWindow(WIDTH, HEIGHT, "Input test.");
   TouchableCollection tc = TouchableCollection();
-  auto box=DraggableBox(&tc,{20,20},{30,30},"A");
+  auto choices = Vec<Chars>{"Ok", "Not ok", "It's good", "Abacus"};
+  SearchBar sb(&tc, Vector2{30, 30}, choices);
+  using namespace GameManager;
   while (!WindowShouldClose()) {
     tc.click_update();
-    box.mouseMoveUpdate();
-       BeginDrawing();
+    sb.CharUpdate();
+    if (auto x = sb.getClick()) {
+      Debugger::push_message(x);
+    }
+    BeginDrawing();
     ClearBackground(RAYWHITE);
-    box.draw();
-    //Debugger::draw();
+    sb.draw();
+    Debugger::draw();
     EndDrawing();
   }
 }

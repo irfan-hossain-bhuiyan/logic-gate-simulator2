@@ -24,6 +24,7 @@ template <GPs STATE> void detach(m_GatePoint<STATE> &gp, m_Spline &sp);
 //
 //
 template <GatePointState STATE> class m_GatePoint : Touchable {
+private:
   constexpr static float RADIUS = 3.0;
   constexpr static float OUTLINE = 2.0;
   const m_Gate &_gate;
@@ -37,7 +38,7 @@ template <GatePointState STATE> class m_GatePoint : Touchable {
   m_GatePoint(const m_GatePoint &&gp) = delete;
 
 public:
-  bool booleanState = false;
+  bool booleanState = false;//It needed to be public.As friend doesn't work on inherited class.
   m_GatePoint(const m_Gate &gate);
   void _draw();
   m_Spline *get_spline()
@@ -71,18 +72,21 @@ class m_Spline {
   constexpr static float SPLINE_THICKNESS = 5;
   constexpr static float BORDER = 3;
   constexpr static float BEZIER_POINT = 50;
-
 private:
   m_IGP *_in_ptr;
   m_OGP *_out_ptr;
   m_Spline(const m_Spline &s) = delete;
   m_Spline(const m_Spline &&s) = delete;
 
+private:
+  void _signalPass();
+
 public:
   static m_Spline *CURRENT_SPLINE;
   static bool mouse_empty();
   static void SplinesDraw();
   static void removeCurrentSpline();
+  static void signalPasses();
 
   m_Spline(m_IGP *in_ptr, m_OGP *out_ptr);
   ~m_Spline();
@@ -208,4 +212,3 @@ public: // Constructor
          const Chars &text = GateName::SWITCH)
       : m_Gate(tc, pos, text, 0, 1, false) {}
 };
-

@@ -252,6 +252,7 @@ void m_Gate::update() {
     _onClick();
   }
   this->_eventUpdate();
+  this->_circuitUpdate();
   this->mouseMoveUpdate();
   for (auto &x : _inPoints) {
     x->_update();
@@ -270,12 +271,14 @@ void m_Spline::draw() {
   auto in_pos = _in_ptr != nullptr ? _in_ptr->_world_pos() : GetMousePosition();
   auto out_pos =
       _out_ptr != nullptr ? _out_ptr->_world_pos() : GetMousePosition();
+  auto color =
+      _out_ptr != nullptr ? (_out_ptr->booleanState ? RED : WHITE) : WHITE;
   DrawLineBezierCubic(in_pos, out_pos, in_pos + Vector2{-BEZIER_POINT, 0},
                       out_pos + Vector2{BEZIER_POINT, 0}, SPLINE_THICKNESS,
                       BLACK);
   DrawLineBezierCubic(in_pos, out_pos, in_pos + Vector2{-BEZIER_POINT, 0},
                       out_pos + Vector2{BEZIER_POINT, 0},
-                      SPLINE_THICKNESS - BORDER, WHITE);
+                      SPLINE_THICKNESS - BORDER, color);
 }
 template <GPs STATE>
 bool m_GatePoint<STATE>::_checkPointCollision(Vector2 pos) {
@@ -303,7 +306,7 @@ void m_Spline::removeCurrentSpline() {
 void AndGate::_circuitUpdate() {
   bool output = true;
   for (auto &x : _inPoints) {
-    output ^= x->booleanState;
+    output &= x->booleanState;
   }
   _outPoints.front()->booleanState = output;
 }
@@ -338,3 +341,13 @@ void Switch::_eventUpdate() {
   }
 }
 void Light::_circuitUpdate() {}
+void m_Spline::_signalPass() {
+  if (_in_ptr == nullptr || _out_ptr == nullptr) {
+    return;
+  }
+  _in_ptr->booleanState = _out_ptr->booleanState;
+}
+void m_Spline::signalPasses() {
+  for (auto &x : SPLINES)
+    x->_signalPass();
+}

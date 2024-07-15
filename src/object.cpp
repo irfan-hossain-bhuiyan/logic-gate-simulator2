@@ -1,7 +1,12 @@
 #include "object.h"
 #include "basic_template.h"
+#include "globals.h"
 #include <raylib.h>
-bool Draggable::isDraggable() { return true; }
+
+bool Draggable::isDraggable() {
+  using GameManager::GateWindow::isMouseState;
+  return isMouseState(GameManager::GateWindow::MouseState::editing);
+}
 void Draggable::mouseMoveUpdate() {
   { // Updating is_dragging and mouse_relative field feild
     if (is_clicked() && isDraggable()) {

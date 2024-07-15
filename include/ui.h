@@ -1,11 +1,9 @@
 #pragma once
 #include "basic_template.h"
 #include "raylib.h"
-#include <algorithm>
 #include <tuple>
 #include <unordered_set>
 #include <utility>
-#include <vector>
 class TouchableCollection;
 
 class Touchable {
@@ -38,8 +36,8 @@ private:
 
   void push_back(Touchable *touchable);
   void erase(Touchable *touchable);
-  bool no_selected() { return lastSelected == nullptr; }
 public:
+  bool isSelected();
   bool click_update();
   friend class Touchable;
 };

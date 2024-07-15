@@ -40,6 +40,7 @@ public:
   Chars(const char *chars);
   Chars() : Chars("") {}
   Chars(const Chars &other) noexcept;
+  Chars& operator=(const Chars &other)noexcept;
   Chars(const std::string &str) : Chars(str.c_str()) {}
   char *c_str();
   const char *c_str()const;

@@ -1,6 +1,5 @@
 #include "ui.h"
 #include "basic_template.h"
-#include "gate.h"
 #include "raylib.h"
 #include <algorithm>
 #include <cstddef>
@@ -190,3 +189,6 @@ void SearchBar::setPos(Vector2 pos) {
 }
 void Touchable::toSelected() { child_to->lastSelected = this; }
 void SearchBar::toSelected() {this->ib.toSelected();}
+bool TouchableCollection::isSelected(){
+	return lastSelected!=nullptr;
+}
