@@ -19,7 +19,7 @@ bool Touchable::is_touching() {
   return child_to == nullptr ? false : this == child_to->touching;
 }
 bool Touchable::is_selected() {
-  return child_to == nullptr ? false : this == child_to->last_click;
+  return child_to == nullptr ? false : this == child_to->lastSelected;
 }
 void Touchable::add_to(TouchableCollection *tc) {
   if (child_to != nullptr) {
@@ -45,33 +45,34 @@ void TouchableCollection::erase(Touchable *touchable) {
   touchables.erase(touchable);
 }
 
-void TouchableCollection::click_update() {
+bool TouchableCollection::click_update() {
   touching = nullptr;
   auto mouse_pos = GetMousePosition();
   for (auto x : touchables) {
-    if (x->checkPointCollision(mouse_pos)) {
+    if (x->_checkPointCollision(mouse_pos)) {
       touching = x;
       break;
     }
   }
   if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-    last_click = touching;
+    lastSelected = touching;
   }
+  return touching != nullptr;
 }
-void InputBar::cursor_move_right() {
+void InputBar::_cursor_move_right() {
   cursor_position = std::min(cursor_position + 1, (int)input_text.length());
 }
-void InputBar::cursor_move_left() {
+void InputBar::_cursor_move_left() {
   cursor_position = std::max(0, cursor_position - 1);
 }
-void InputBar::erase_front_char() { input_text.erase(cursor_position); }
-void InputBar::move_input() {
+void InputBar::_erase_front_char() { input_text.erase(cursor_position); }
+void InputBar::_move_input() {
   if (IsKeyPressed(KEY_RIGHT))
-    cursor_move_right();
+    _cursor_move_right();
   if (IsKeyPressed(KEY_LEFT))
-    cursor_move_left();
+    _cursor_move_left();
 }
-bool InputBar::char_input() {
+bool InputBar::_char_input() {
   char input = GetCharPressed();
   if (input != '\0') {
     input_text.insert(input, cursor_position);
@@ -79,14 +80,14 @@ bool InputBar::char_input() {
     return true;
   }
   if (IsKeyPressed(KEY_BACKSPACE)) {
-    cursor_move_left();
-    erase_front_char();
+    _cursor_move_left();
+    _erase_front_char();
     return true;
   }
 
   return false;
 }
-std::tuple<Chars, Color> InputBar::rendered_text() {
+std::tuple<Chars, Color> InputBar::_rendered_text() {
   if (input_text.empty()) {
     return std::tuple(ref_text, ref_text_color);
   }
@@ -94,7 +95,7 @@ std::tuple<Chars, Color> InputBar::rendered_text() {
   text.insert('|', cursor_position);
   return std::tuple(text, BLACK);
 }
-bool InputBar::checkPointCollision(Vector2 pos) {
+bool InputBar::_checkPointCollision(Vector2 pos) {
   return CheckCollisionPointRec(pos, rect);
 }
 
@@ -107,16 +108,16 @@ InputBar::InputBar(TouchableCollection *tc, float x, float y, float width,
                    float height)
     : Touchable(tc), rect(Rectangle{x, y, width, height}) {}
 bool InputBar::TextUpdate() {
-  if (is_selected()) {   // is_clicked is a Touchable funciton.It checks if any
-                         // element has been clicked or not.
-    move_input();        // move_input is to move cursor using arrow.
-    return char_input(); // char_input is for typing.It returns true when the
-                         // input has been updated.
+  if (is_selected()) {    // is_clicked is a Touchable funciton.It checks if any
+                          // element has been clicked or not.
+    _move_input();        // move_input is to move cursor using arrow.
+    return _char_input(); // char_input is for typing.It returns true when the
+                          // input has been updated.
   }
   return false;
 }
 void InputBar::draw() {
-  auto [text, color] = rendered_text();
+  auto [text, color] = _rendered_text();
   drawRectangleWithLines(rect, WHITE, BLACK, is_selected() ? 2.0 : 1.0);
   Vector2 pos = rect_pos(rect);
   pos += Vector2{5, 5};
@@ -132,12 +133,12 @@ void Label::draw(float linewidth) {
   Vector2 text_pos = center - Vector2{text_width, text_height} / 2;
   DrawText(text, text_pos, font_size, BLACK);
 }
-bool Button::checkPointCollision(Vector2 pos) {
+bool Button::_checkPointCollision(Vector2 pos) {
   return CheckCollisionPointRec(pos, label.rect);
 }
 void Button::draw() { label.draw(is_touching() ? 2.0 : 1.0); }
 
-bool SelectBar::checkPointCollision(Vector2 pos) {
+bool SelectBar::_checkPointCollision(Vector2 pos) {
   Rectangle colrec = Rectangle{_position.x, _position.y, _rectSize.width,
                                _rectSize.height * float(options.size())};
   return CheckCollisionPointRec(pos, colrec);
@@ -145,7 +146,7 @@ bool SelectBar::checkPointCollision(Vector2 pos) {
 void SelectBar::draw() {
   auto highlighted = options.size();
   if (is_touching()) {
-    highlighted = ((float)GetMouseY() - _position.y) / _rectSize.height;
+    highlighted = (GetMouseY() - _position.y) / _rectSize.height;
   }
   for (usize i = 0; i < options.size(); i++) {
     Rectangle button_rect =
@@ -159,6 +160,7 @@ Chars SelectBar::getClick() {
   if (is_clicked()) {
     int highlighted =
         int((float(GetMouseY()) - _position.y) / _rectSize.height);
+
     return options[highlighted];
   }
   return Chars();
@@ -171,76 +173,20 @@ void SearchBar::CharUpdate() {
     sb.options = filtered_options;
   }
 }
+void InputBar::setPos(Vector2 pos) {
+  rect.x = pos.x;
+  rect.y = pos.y;
+}
+
 Chars SearchBar::getClick() { return sb.getClick(); }
 void SearchBar::draw() {
   ib.draw();
   sb.draw();
 }
-// namespace Debugger
-//
-namespace GameManager {
-void _removeCurrentSpline() {
-
-  delete m_Spline::CURRENT_SPLINE;
-  m_Spline::CURRENT_SPLINE = nullptr;
+void SelectBar::setPos(Vector2 pos) { this->_position = pos; }
+void SearchBar::setPos(Vector2 pos) {
+  this->ib.setPos(pos);
+  this->sb.setPos(pos + Vector2{0, this->ib.rect.height});
 }
-
-void _onRightClick() {
-  if (m_Spline::CURRENT_SPLINE != nullptr) {
-    _removeCurrentSpline();
-    return;
-  }
-}
-
-void mainUpdate() {
-  if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
-    _onRightClick();
-  }
-}
-} // namespace GameManager
-  //
-namespace GameManager::Debugger {
-BoundedQueue<Chars> bq(10);
-Vector2 positon = Vector2{10, 10};
-int textspace = 3;
-int fontSize = 11;
-void draw() {
-  for (usize i = 0; i < bq.size(); i++) {
-    float y_offset = float(textspace + fontSize) * i;
-    auto pos = positon + Vector2{0, y_offset};
-    DrawText(bq.at(i), pos);
-  }
-}
-void push_message(const Chars &&text) { bq.push(text); }
-void push_message(const Chars &text) { bq.push(text); }
-} // namespace GameManager::Debugger
-  //
-namespace GameManager::UI {
-TouchableCollection tc;
-// SelectBar sb(&tc,{0,0});
-void draw(){
-	
-}
-void update(){
-
-}
-} // namespace GameManager::UI
-namespace GameManager::GateWindow {
-TouchableCollection tc;
-Gates gates;
-Camera2D camera2d{
-    .offset = {0, 0},
-    .target = {0, 0},
-    .rotation = 0.0,
-    .zoom = 1.0,
-};
-void draw() {
-  for (auto &x : gates)
-    x->draw();
-}
-void update() {
-  for (auto &x : gates)
-    x->update();
-}
-// Usage:
-} // namespace GameManager::GateWindow
+void Touchable::toSelected() { child_to->lastSelected = this; }
+void SearchBar::toSelected() {this->ib.toSelected();}

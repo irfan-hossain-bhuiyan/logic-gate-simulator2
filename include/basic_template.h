@@ -21,7 +21,7 @@ template <typename T> using Vec = std::vector<T>;
 template <typename T> using Box = std::unique_ptr<T>;
 template <typename T> using Rc = std::shared_ptr<T>;
 using Rect = Rectangle;
-const u8 CHARS_MAX_SIZE = 64;
+const u8 CHARS_MAX_SIZE =16;
 enum class Error {
   OVERFLOW_ERROR,
   OUTOFBOUND_ERROR,
@@ -47,6 +47,7 @@ public:
   explicit operator bool() const;
   char operator[](int a);
   auto operator<=>(const Chars& ch)const;
+  bool operator==(const Chars& ch)const;
   Error push_back(char c);
   char pop_back();
   Error insert(char c, u8 position);

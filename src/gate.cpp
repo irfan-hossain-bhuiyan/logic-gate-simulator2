@@ -1,5 +1,6 @@
 #include "gate.h"
 #include "basic_template.h"
+#include "globals.h"
 #include "ui.h"
 #include <algorithm>
 #include <memory>
@@ -18,16 +19,23 @@ float m_Gate::_inPointDistance() {
   return std::max(MIN_HEIGHT / float(_inPointnr() + 1), MIN_POINT_DISTANCE);
 }
 RectSize m_Gate::_rectsize() { return {WIDTH, _rectHeight()}; }
-void m_Gate::draw() {
-  float lineWidth = is_clicking() ? 3.0 : 1.0;
-  Label(rectFromPos(NodePos, _rectsize()), _text, RED).draw(lineWidth);
-  // Drawing in point
+void m_Gate::_pointDraw() {
   for (auto &x : this->_inPoints) {
     x->_draw();
   }
   for (auto &x : this->_outPoints) {
     x->_draw();
   }
+}
+void m_Gate::draw() {
+  // Drawing in point
+  _boxDraw();
+  _pointDraw();
+}
+void m_Gate::_boxDraw(Color color) {
+
+  float lineWidth = is_clicking() ? 3.0 : 1.0;
+  Label(_rect(), _text, color).draw(lineWidth);
 }
 template <GPs T> Vector2 GatePoint<T>::_world_pos() {
   return relativePos + _gate.NodePos;
@@ -131,7 +139,7 @@ m_Spline::m_Spline(m_IGP *in_ptr, m_OGP *out_ptr)
 m_Spline::~m_Spline() {
   auto it = SPLINES.find(this);
   if (it == SPLINES.end()) {
-    Debugger::push_message("SPLINES isn't in spline");
+    GameManager::Debugger::push_message("SPLINES isn't in spline");
     return;
   }
   SPLINES.erase(it);
@@ -161,6 +169,7 @@ template <GPs STATE> void attach(m_GatePoint<STATE> &gp, m_Spline &spline) {
 template void attach<GPs::in>(m_IGP &gp, m_Spline &spline);
 template void attach<GPs::out>(m_OGP &gp, m_Spline &spline);
 template <GPs STATE> void detach(m_GatePoint<STATE> &gp, m_Spline &spline) {
+  using namespace GameManager;
   if constexpr (STATE == GPs::in) {
     if (gp.splines.empty()) {
       Debugger::push_message("The inpoint vector is empty.");
@@ -238,9 +247,11 @@ void m_Gate::_init() {
 }
 
 void m_Gate::update() {
-  if (this->is_clicked()) {
+  using namespace GateWindow;
+  if (this->is_clicked() && isMouseState(MouseState::editing)) {
     _onClick();
   }
+  this->_eventUpdate();
   this->mouseMoveUpdate();
   for (auto &x : _inPoints) {
     x->_update();
@@ -266,13 +277,14 @@ void m_Spline::draw() {
                       out_pos + Vector2{BEZIER_POINT, 0},
                       SPLINE_THICKNESS - BORDER, WHITE);
 }
-template <GPs STATE> bool m_GatePoint<STATE>::checkPointCollision(Vector2 pos) {
+template <GPs STATE>
+bool m_GatePoint<STATE>::_checkPointCollision(Vector2 pos) {
   return CheckCollisionPointCircle(pos, _cir());
 }
 template <GPs STATE> bool m_GatePoint<STATE>::_is_disconnected() {
   return splines.empty();
 }
-bool m_Gate::checkPointCollision(Vector2 pos) {
+bool m_Gate::_checkPointCollision(Vector2 pos) {
   return CheckCollisionPointRec(pos, _rect());
 }
 template <GPs STATE>
@@ -281,3 +293,48 @@ m_Spline *m_GatePoint<STATE>::get_spline()
 {
   return this->splines.front();
 }
+void m_Spline::removeCurrentSpline() {
+  if (m_Spline::CURRENT_SPLINE == nullptr)
+    return;
+  delete m_Spline::CURRENT_SPLINE;
+  m_Spline::CURRENT_SPLINE = nullptr;
+}
+
+void AndGate::_circuitUpdate() {
+  bool output = true;
+  for (auto &x : _inPoints) {
+    output ^= x->booleanState;
+  }
+  _outPoints.front()->booleanState = output;
+}
+void OrGate::_circuitUpdate() {
+  bool output = false;
+  for (auto &x : _inPoints) {
+    output |= x->booleanState;
+  }
+  _outPoints.front()->booleanState = output;
+}
+void NotGate::_circuitUpdate() {
+  bool output = true;
+  for (auto &x : _inPoints) {
+    output ^= x->booleanState;
+  }
+  _outPoints.front()->booleanState = output;
+}
+bool Light::_isOn() { return _inPoints.front()->booleanState; }
+void Light::draw() {
+  _boxDraw(_isOn() ? GREEN : RED);
+  _pointDraw();
+}
+void Switch::draw() {
+  _boxDraw(_isOn ? GREEN : RED);
+  _pointDraw();
+}
+void Switch::_circuitUpdate() { _outPoints.front()->booleanState = _isOn; }
+void Switch::_eventUpdate() {
+  using namespace GateWindow;
+  if (is_clicked() && isMouseState(MouseState::running)) {
+    _isOn = !_isOn;
+  }
+}
+void Light::_circuitUpdate() {}

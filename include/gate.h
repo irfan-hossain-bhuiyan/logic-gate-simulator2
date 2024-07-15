@@ -1,5 +1,6 @@
 #pragma once
 #include "basic_template.h"
+#include "globals.h"
 #include "object.h"
 #include "ui.h"
 #include <raylib.h>
@@ -8,7 +9,7 @@ enum class GatePointState { in, out };
 class m_Spline;
 class m_Gate;
 using Gate = Box<m_Gate>;
-using Gates=Vec<Gate>;
+using Gates = Vec<Gate>;
 using GPs = GatePointState;
 // GatePoint is a helper class.
 // It is clickable.
@@ -31,7 +32,7 @@ template <GatePointState STATE> class m_GatePoint : Touchable {
   Vector2 _world_pos();
   Circle _cir();
   bool _is_disconnected();
-  bool checkPointCollision(Vector2 pos) override;
+  // bool _checkPointCollision(Vector2 pos) override;
   m_GatePoint(const m_GatePoint &gp) = delete;
   m_GatePoint(const m_GatePoint &&gp) = delete;
 
@@ -47,7 +48,7 @@ public:
 
   // void removeSpline()
   //  requires(STATE == GPs::in);
-
+  bool _checkPointCollision(Vector2 pos) override;
   void _setRelativePos(Vector2 pos) { relativePos = pos; }
   void _update();
   void _onClick();
@@ -69,7 +70,8 @@ class m_Spline {
   static std::unordered_set<m_Spline *> SPLINES;
   constexpr static float SPLINE_THICKNESS = 5;
   constexpr static float BORDER = 3;
-  constexpr static float BEZIER_POINT=50;
+  constexpr static float BEZIER_POINT = 50;
+
 private:
   m_IGP *_in_ptr;
   m_OGP *_out_ptr;
@@ -80,6 +82,8 @@ public:
   static m_Spline *CURRENT_SPLINE;
   static bool mouse_empty();
   static void SplinesDraw();
+  static void removeCurrentSpline();
+
   m_Spline(m_IGP *in_ptr, m_OGP *out_ptr);
   ~m_Spline();
 
@@ -99,9 +103,12 @@ class m_Gate : public Draggable {
   constexpr static float MIN_POINT_DISTANCE = 10;
 
 public:
-  void draw();
-  virtual void circuitUpdate() = 0;
+  virtual void draw();
   void update();
+
+protected:
+  virtual void _circuitUpdate() = 0;
+  virtual void _eventUpdate() {};
 
   m_Gate(TouchableCollection *tc, Vector2 pos, const Chars &text,
          usize inPointnrMin, usize outPointnrMin, bool dynamicInput)
@@ -115,6 +122,8 @@ public:
 protected:
   IGPs _inPoints;
   OGPs _outPoints;
+  void _pointDraw();
+  void _boxDraw(Color color = RED);
 
 private:
   const usize _inPointnrMin = 2;
@@ -132,53 +141,71 @@ private:
   usize _inPointnr();
   float _rectHeight();
   RectSize _rectsize();
-  Rect _rect();
   void _onClick();
   IGP &_addGatePoint();
-  bool checkPointCollision(Vector2 pos) override;
+  bool _checkPointCollision(Vector2 pos) override;
 
   friend IGP;
   friend OGP;
   template <GPs S> friend void attach(m_GatePoint<S> &gp, m_Spline &sp);
   template <GPs S> friend void detach(m_GatePoint<S> &gp, m_Spline &sp);
+
+protected:
+  Rect _rect();
 };
+using namespace GameManager;
 class AndGate : public m_Gate {
 public:
-  AndGate(TouchableCollection *tc, Vector2 pos, Chars &&text = "")
+  AndGate(TouchableCollection *tc, Vector2 pos,
+          const Chars &text = GateName::AND)
       : m_Gate(tc, pos, text, 2, 1, true) {}
-  void circuitUpdate() override final {
-    bool output = true;
-    for (auto &x : _inPoints) {
-      output ^= x->booleanState;
-    }
-    _outPoints.front()->booleanState = output;
-  }
+  void _circuitUpdate() override final;
 };
 class OrGate : public m_Gate {
-public:
-  OrGate(TouchableCollection *tc, Vector2 pos, Chars &&text = "")
+public: // Constructor
+  OrGate(TouchableCollection *tc, Vector2 pos, const Chars &text = GateName::OR)
       : m_Gate(tc, pos, text, 2, 1, true) {}
-  void circuitUpdate() override final {
-    bool output = false;
-    for (auto &x : _inPoints) {
-      output |= x->booleanState;
-    }
-    _outPoints.front()->booleanState = output;
-  }
+
+public: // Functions
+  void _circuitUpdate() override final;
 };
 
 class NotGate : public m_Gate {
 public:
-  void circuitUpdate() override final {
-    bool output = true;
-    for (auto &x : _inPoints) {
-      output ^= x->booleanState;
-    }
-    _outPoints.front()->booleanState = output;
-  }
+  void _circuitUpdate() override final;
 
 public:
-  NotGate(TouchableCollection *tc, Vector2 pos, const Chars &text = "")
+  NotGate(TouchableCollection *tc, Vector2 pos,
+          const Chars &text = GateName::NOT)
       : m_Gate(tc, pos, text, 1, 1, false) {}
 };
 // Here are the functions
+class Light : public m_Gate {
+public: // Functions
+  void draw() override final;
+  void _circuitUpdate() override final;
+
+public: // Constructors
+  Light(TouchableCollection *tc, Vector2 pos,
+        const Chars &text = GateName::LIGHT)
+      : m_Gate(tc, pos, text, 1, 0, false) {}
+
+private:
+  bool _isOn(); // Check if the the light is turns on or not.
+};
+
+class Switch : public m_Gate {
+private:
+  bool _isOn;
+  void _eventUpdate() override final;
+
+public:
+  void draw() override final;
+  void _circuitUpdate() override final;
+
+public: // Constructor
+  Switch(TouchableCollection *tc, Vector2 pos,
+         const Chars &text = GateName::SWITCH)
+      : m_Gate(tc, pos, text, 0, 1, false) {}
+};
+

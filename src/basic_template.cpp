@@ -286,7 +286,6 @@ void DrawText(std::string text, Vector2 position, int fontSize, Color color) {
 void DrawText(Chars text, Vector2 position, int fontSize, Color color) {
   DrawText(text.c_str(), position.x, position.y, fontSize, color);
 }
-
 // Example usage:
 void DrawCircleLinesCir(Circle cir, Color color, float width) {
   DrawRing(cir.center, cir.radius, cir.radius + width, 0.0, 360.0, 0, color);
@@ -294,7 +293,9 @@ void DrawCircleLinesCir(Circle cir, Color color, float width) {
 auto Chars::operator<=>(const Chars& ch) const{
 	return std::lexicographical_compare(this->begin(),this->end(),ch.begin(),ch.end());
 }
-
+bool Chars::operator==(const Chars&ch)const{
+	return std::equal(this->begin(),this->end(),ch.begin());
+}
 
 std::ostream& operator<<(std::ostream& os,const Chars& ch){
 	os<<ch.c_str();
