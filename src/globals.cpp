@@ -3,18 +3,14 @@
 #include "ui.h"
 #include <memory>
 #include <raylib.h>
+#include <raymath.h>
 namespace GameManager::GateWindow {
-TouchableCollection tc;
+TouchableCollection tc(UsedCamera::gateCamera);
 Vector2 arrowDirection;
 MouseState mouseState = MouseState::editing;
 [[nodiscard]] bool isMouseState(MouseState ms) { return ms == mouseState; }
 Gates gates;
-Camera2D camera2d{
-    .offset = {0, 0},
-    .target = {0, 0},
-    .rotation = 0.0,
-    .zoom = 1.0,
-};
+Camera2D camera2d{};
 Camera2D getCamera() { return camera2d; }
 void _arrowUpdate() {
   arrowDirection = {0, 0};
@@ -47,8 +43,10 @@ void draw() {
 }
 void _cameraMove() {
   float roll = GetMouseWheelMove();
+  if (roll != 0)
+    Debugger::push_message(std::to_string(camera2d.zoom));
   camera2d.zoom += (0.1 * roll);
-  camera2d.offset += arrowDirection * 0.1;
+  camera2d.target += Vector2Normalize(arrowDirection);
 }
 void update() {
   _arrowUpdate();
@@ -103,7 +101,7 @@ void push_message(const Chars &text) { bq.push(text); }
 namespace GameManager::UI {
 
 UIState currentState = UIState::NOTIHING;
-TouchableCollection tc;
+TouchableCollection tc(UsedCamera::noCamera);
 Vec<Chars> _menuBar() {
   using namespace GateWindow;
   using namespace Menu_Options;
@@ -204,7 +202,16 @@ void update() {
   }
 }
 } // namespace GameManager::UI
-void GameManager::updateEvent() {
+
+void GameManager::tcUpdate() {
   UI::tc.click_update();
   GateWindow::tc.click_update();
+}
+Vector2 GameManager::getGlobalMousePosition(const UsedCamera camera) {
+  switch (camera) {
+  case UsedCamera::noCamera:
+    return GetMousePosition();
+  case UsedCamera::gateCamera:
+    return GetScreenToWorld2D(GetMousePosition(), GateWindow::camera2d);
+  }
 }

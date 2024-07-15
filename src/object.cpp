@@ -8,11 +8,12 @@ bool Draggable::isDraggable() {
   return isMouseState(GameManager::GateWindow::MouseState::editing);
 }
 void Draggable::mouseMoveUpdate() {
+  UsedCamera camera = get_tc()->_camera;
   { // Updating is_dragging and mouse_relative field feild
     if (is_clicked() && isDraggable()) {
       if (!is_dragging) {
         is_dragging = true;
-        mouseRelative = NodePos - GetMousePosition();
+        mouseRelative = NodePos - getGlobalMousePosition(camera);
       }
     }
     if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
@@ -20,7 +21,7 @@ void Draggable::mouseMoveUpdate() {
     }
   }
   if (is_dragging) {
-    NodePos = GetMousePosition() + mouseRelative;
+    NodePos = getGlobalMousePosition(camera) + mouseRelative;
   }
 }
 bool DraggableBox::_checkPointCollision(Vector2 position) {

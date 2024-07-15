@@ -268,9 +268,13 @@ void m_Spline::SplinesDraw() {
   }
 }
 void m_Spline::draw() {
-  auto in_pos = _in_ptr != nullptr ? _in_ptr->_world_pos() : GetMousePosition();
-  auto out_pos =
-      _out_ptr != nullptr ? _out_ptr->_world_pos() : GetMousePosition();
+  using namespace GameManager;
+  auto in_pos = _in_ptr != nullptr
+                    ? _in_ptr->_world_pos()
+                    : getGlobalMousePosition(UsedCamera::gateCamera);
+  auto out_pos = _out_ptr != nullptr
+                     ? _out_ptr->_world_pos()
+                     : getGlobalMousePosition(UsedCamera::gateCamera);
   auto color =
       _out_ptr != nullptr ? (_out_ptr->booleanState ? RED : WHITE) : WHITE;
   DrawLineBezierCubic(in_pos, out_pos, in_pos + Vector2{-BEZIER_POINT, 0},

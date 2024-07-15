@@ -1,45 +1,49 @@
 #pragma once
 #include "basic_template.h"
+#include "globals.h"
 #include "raylib.h"
 #include <tuple>
 #include <unordered_set>
 #include <utility>
 class TouchableCollection;
 
+using namespace GameManager;
 class Touchable {
 public:
   virtual bool _checkPointCollision(Vector2 pos) = 0;
-  Touchable(TouchableCollection *tc);
-  Touchable(Touchable&)=delete;
-  Touchable(Touchable&&)=delete;
+  Touchable(TouchableCollection* const tc);
+  Touchable(Touchable &) = delete;
+  Touchable(Touchable &&) = delete;
   virtual ~Touchable();
 
   bool is_touching();
   bool is_selected();
   bool is_clicking();
   bool is_clicked();
-  void add_to(TouchableCollection *tc);
   void toSelected();
   TouchableCollection *get_tc() const { return child_to; }
 
 private:
-  TouchableCollection *child_to = nullptr;
+  TouchableCollection* const child_to;
   friend class TouchableCollection;
 };
 
 class TouchableCollection {
-	//If a object is selected or not is checked by touchable collection.
+  // If a object is selected or not is checked by touchable collection.
 private:
   std::unordered_set<Touchable *> touchables;
   Touchable *touching = nullptr;
   Touchable *lastSelected = nullptr;
+  const UsedCamera _camera;
 
   void push_back(Touchable *touchable);
   void erase(Touchable *touchable);
 public:
+  TouchableCollection(UsedCamera camera);
   bool isSelected();
   bool click_update();
   friend class Touchable;
+  friend class Draggable;
 };
 class InputBar : Touchable {
 private:
@@ -57,6 +61,7 @@ private:
   std::tuple<Chars, Color> _rendered_text();
   bool _checkPointCollision(Vector2 pos) override;
   void setPos(Vector2 pos);
+
 public:
   InputBar(TouchableCollection *tc, Rectangle rect, int fontSize = 11);
   InputBar(TouchableCollection *tc, Rectangle rect, const Chars &ref_text,

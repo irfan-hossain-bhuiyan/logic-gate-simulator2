@@ -11,7 +11,7 @@ public:
   Vector2 NodePos;
   void mouseMoveUpdate();
   virtual bool isDraggable();
-  Draggable(TouchableCollection *tc, Vector2 nodePos)
+  Draggable(TouchableCollection* const tc, Vector2 nodePos)
       : Touchable(tc), NodePos(nodePos) {}
 };
 

@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "basic_template.h"
+#include "globals.h"
 #include "raylib.h"
 #include <algorithm>
 #include <cstddef>
@@ -10,23 +11,23 @@ Touchable::~Touchable() {
     child_to->erase(this);
   }
 }
-Touchable::Touchable(TouchableCollection *tc) {
-  child_to = tc;
+Touchable::Touchable(TouchableCollection* const tc):child_to(tc) {
   tc->push_back(this);
 }
+TouchableCollection::TouchableCollection(UsedCamera camera) : _camera(camera) {}
 bool Touchable::is_touching() {
   return child_to == nullptr ? false : this == child_to->touching;
 }
 bool Touchable::is_selected() {
   return child_to == nullptr ? false : this == child_to->lastSelected;
 }
-void Touchable::add_to(TouchableCollection *tc) {
-  if (child_to != nullptr) {
-    child_to->erase(this);
-  }
-  child_to = tc;
-  tc->push_back(this);
-}
+//void Touchable::add_to(TouchableCollection *tc) {
+//  if (child_to != nullptr) {
+//    child_to->erase(this);
+//  }
+//  child_to = tc;
+//  tc->push_back(this);
+//}
 bool Touchable::is_clicked() {
   return is_selected() &&
          IsMouseButtonPressed(MOUSE_BUTTON_LEFT); // This works because for
@@ -45,10 +46,11 @@ void TouchableCollection::erase(Touchable *touchable) {
 }
 
 bool TouchableCollection::click_update() {
+  using namespace GameManager;
   touching = nullptr;
-  auto mouse_pos = GetMousePosition();
-  for (auto x : touchables) {
-    if (x->_checkPointCollision(mouse_pos)) {
+  Vector2 mouseWorldPos=getGlobalMousePosition(_camera);
+   for (auto x : touchables) {
+    if (x->_checkPointCollision(mouseWorldPos)) {
       touching = x;
       break;
     }
@@ -107,11 +109,11 @@ InputBar::InputBar(TouchableCollection *tc, float x, float y, float width,
                    float height)
     : Touchable(tc), rect(Rectangle{x, y, width, height}) {}
 bool InputBar::TextUpdate() {
-  if (is_selected()) {    // is_clicked is a Touchable funciton.It checks if any
-                          // element has been clicked or not.
+  if (is_selected()) {    // is_clicked is a Touchable funciton.It checks
+                          // if any element has been clicked or not.
     _move_input();        // move_input is to move cursor using arrow.
-    return _char_input(); // char_input is for typing.It returns true when the
-                          // input has been updated.
+    return _char_input(); // char_input is for typing.It returns true
+                          // when the input has been updated.
   }
   return false;
 }
@@ -188,7 +190,5 @@ void SearchBar::setPos(Vector2 pos) {
   this->sb.setPos(pos + Vector2{0, this->ib.rect.height});
 }
 void Touchable::toSelected() { child_to->lastSelected = this; }
-void SearchBar::toSelected() {this->ib.toSelected();}
-bool TouchableCollection::isSelected(){
-	return lastSelected!=nullptr;
-}
+void SearchBar::toSelected() { this->ib.toSelected(); }
+bool TouchableCollection::isSelected() { return lastSelected != nullptr; }

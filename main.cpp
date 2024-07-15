@@ -8,7 +8,7 @@ int main() {
   InitWindow(WIDTH, HEIGHT, "Input test.");
   using namespace GameManager;
   while (!WindowShouldClose()) {
-    GameManager::updateEvent();
+    GameManager::tcUpdate();
     UI::update();
     GateWindow::update();
     BeginDrawing();

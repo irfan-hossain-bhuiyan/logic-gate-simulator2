@@ -1,15 +1,22 @@
 #pragma once
 #include "basic_template.h"
 #include <raylib.h>
+#include <raymath.h>
 namespace GameManager {
-void updateEvent();
+void init(); 
+void tcUpdate();
+enum class UsedCamera{
+	noCamera,
+	gateCamera,
+};
+Vector2 getGlobalMousePosition(const UsedCamera camera);
 namespace Debugger {
 void push_message(const Chars &&text);
 void push_message(const Chars &text);
 void draw();
 } // namespace Debugger
 namespace UI::Menu_Options {
-const Chars MOUSE_TOGGLE = "MOUSE TOGGLE";
+const Chars MOUSE_TOGGLE = "RUN/EDIT";
 const Chars DELETE = "DELETE";
 const Chars CREATE = "CREATE";
 //const Vec<Chars> MENU = {MOUSE_TOGGLE, DELETE, CREATE};
