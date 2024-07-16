@@ -10,7 +10,15 @@ Vector2 arrowDirection;
 MouseState mouseState = MouseState::editing;
 [[nodiscard]] bool isMouseState(MouseState ms) { return ms == mouseState; }
 Gates gates;
-Camera2D camera2d{};
+
+Camera2D camera2d;
+void _initGateCamera() {
+  Vector2 middle =
+      Vector2{float(GetScreenWidth()) / 2, float(GetScreenHeight()) / 2};
+  GateWindow::camera2d = Camera2D{
+      .offset = middle, .target = {0, 0}, .rotation = 0.0f, .zoom = 1.0f};
+}
+
 Camera2D getCamera() { return camera2d; }
 void _arrowUpdate() {
   arrowDirection = {0, 0};
@@ -43,10 +51,15 @@ void draw() {
 }
 void _cameraMove() {
   float roll = GetMouseWheelMove();
-  if (roll != 0)
+  if (roll != 0) {
+    float zoomIncrease = 0.1f * roll;
+    Vector2 distance = camera2d.offset - GetMousePosition();
+    camera2d.offset += distance * zoomIncrease / camera2d.zoom;
+    camera2d.zoom += (0.1f * roll);
     Debugger::push_message(std::to_string(camera2d.zoom));
-  camera2d.zoom += (0.1 * roll);
-  camera2d.target += Vector2Normalize(arrowDirection);
+  }
+  camera2d.zoom = Clamp(camera2d.zoom, 0.1, 4);
+  camera2d.target += Vector2Normalize(arrowDirection)/camera2d.zoom;
 }
 void update() {
   _arrowUpdate();
@@ -62,16 +75,17 @@ void create_gate(const Chars &gateName) {
   using namespace GateName;
   using std::make_unique;
   Gate gate;
+  auto mouseGlobalPos = getGlobalMousePosition(UsedCamera::gateCamera);
   if (gateName == AND) {
-    gate = make_unique<AndGate>(&tc, GetMousePosition(), "AND");
+    gate = make_unique<AndGate>(&tc, mouseGlobalPos, "AND");
   } else if (gateName == OR) {
-    gate = make_unique<OrGate>(&tc, GetMousePosition(), "OR");
+    gate = make_unique<OrGate>(&tc, mouseGlobalPos, "OR");
   } else if (gateName == NOT) {
-    gate = make_unique<NotGate>(&tc, GetMousePosition(), "NOT");
+    gate = make_unique<NotGate>(&tc, mouseGlobalPos, "NOT");
   } else if (gateName == LIGHT) {
-    gate = make_unique<Light>(&tc, GetMousePosition(), "LIGHT");
+    gate = make_unique<Light>(&tc, mouseGlobalPos, "LIGHT");
   } else if (gateName == SWITCH) {
-    gate = make_unique<Switch>(&tc, GetMousePosition(), "SWITCH");
+    gate = make_unique<Switch>(&tc, mouseGlobalPos, "SWITCH");
   } else {
     Debugger::push_message("Gate name is not addressed.");
     return;
@@ -202,12 +216,13 @@ void update() {
   }
 }
 } // namespace GameManager::UI
+namespace GameManager {
 
-void GameManager::tcUpdate() {
+void tcUpdate() {
   UI::tc.click_update();
   GateWindow::tc.click_update();
 }
-Vector2 GameManager::getGlobalMousePosition(const UsedCamera camera) {
+Vector2 getGlobalMousePosition(const UsedCamera camera) {
   switch (camera) {
   case UsedCamera::noCamera:
     return GetMousePosition();
@@ -215,3 +230,5 @@ Vector2 GameManager::getGlobalMousePosition(const UsedCamera camera) {
     return GetScreenToWorld2D(GetMousePosition(), GateWindow::camera2d);
   }
 }
+void init() { GateWindow::_initGateCamera(); }
+} // namespace GameManager

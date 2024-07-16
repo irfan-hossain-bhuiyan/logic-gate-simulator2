@@ -7,6 +7,7 @@ int main() {
 
   InitWindow(WIDTH, HEIGHT, "Input test.");
   using namespace GameManager;
+  init();
   while (!WindowShouldClose()) {
     GameManager::tcUpdate();
     UI::update();
