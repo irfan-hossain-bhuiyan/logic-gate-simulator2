@@ -8,7 +8,7 @@ bool Draggable::isDraggable() {
   return isMouseState(GameManager::GateWindow::MouseState::editing);
 }
 void Draggable::mouseMoveUpdate() {
-  UsedCamera camera = get_tc()->_camera;
+  UsedCameraS camera = get_tc()->_camera;
   { // Updating is_dragging and mouse_relative field feild
     if (is_clicked() && isDraggable()) {
       if (!is_dragging) {

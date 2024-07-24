@@ -1,6 +1,3 @@
-
-
-
 # Compiler
 CXX = clang++
 
@@ -9,6 +6,7 @@ CXXFLAGS =  -std=c++20 -Iinclude -O0 -g
 # Source directory
 SRC_DIR = src
 OBJ_DIR = obj
+INCLUDE_DIR = include
 # Find all .cpp files in the source directory
 SOURCES= $(wildcard $(SRC_DIR)/*.cpp)
 OBJECTS =$(SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
@@ -32,7 +30,7 @@ $(TARGET): $(OBJECTS)
 	$(CXX) $(CXXFLAGS)  $^ -lraylib -opengl -o $@
 
 # Compile .cpp files to .o files
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(INCLUDE_DIR)/%.h
 	@mkdir -p $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 $(MAIN_O):$(MAIN_CP)

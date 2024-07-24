@@ -38,7 +38,8 @@ private:
   m_GatePoint(const m_GatePoint &&gp) = delete;
 
 public:
-  bool booleanState = false;//It needed to be public.As friend doesn't work on inherited class.
+  bool booleanState = false; // It needed to be public.As friend doesn't work on
+                             // inherited class.
   m_GatePoint(const m_Gate &gate);
   void _draw();
   m_Spline *get_spline()
@@ -72,6 +73,7 @@ class m_Spline {
   constexpr static float SPLINE_THICKNESS = 5;
   constexpr static float BORDER = 3;
   constexpr static float BEZIER_POINT = 50;
+
 private:
   m_IGP *_in_ptr;
   m_OGP *_out_ptr;
@@ -108,6 +110,7 @@ class m_Gate : public Draggable {
 
 public:
   virtual void draw();
+  ~m_Gate();
   void update();
 
 protected:
@@ -183,6 +186,35 @@ public:
           const Chars &text = GateName::NOT)
       : m_Gate(tc, pos, text, 1, 1, false) {}
 };
+
+class NorGate : public m_Gate {
+public:
+  void _circuitUpdate() override final;
+
+public:
+  NorGate(TouchableCollection *tc, Vector2 pos,
+          const Chars &text = GateName::NOR)
+      : m_Gate(tc, pos, text, 2, 1, true) {}
+};
+class NAndGate : public m_Gate {
+public:
+  void _circuitUpdate() override final;
+
+public:
+  NAndGate(TouchableCollection *tc, Vector2 pos,
+           const Chars &text = GateName::NAND)
+      : m_Gate(tc, pos, text, 2, 1, true) {}
+};
+class XorGate : public m_Gate {
+public:
+  void _circuitUpdate() override final;
+
+public:
+  XorGate(TouchableCollection *tc, Vector2 pos,
+           const Chars &text = GateName::NAND)
+      : m_Gate(tc, pos, text, 2, 1, false) {}
+};
+
 // Here are the functions
 class Light : public m_Gate {
 public: // Functions

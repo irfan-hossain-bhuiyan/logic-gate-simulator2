@@ -1,11 +1,16 @@
 #include "globals.h"
+#include "basic_template.h"
 #include "gate.h"
 #include "ui.h"
+#include <algorithm>
+#include <filesystem>
 #include <memory>
 #include <raylib.h>
 #include <raymath.h>
+#include <stdexcept>
+#include <system_error>
 namespace GameManager::GateWindow {
-TouchableCollection tc(UsedCamera::gateCamera);
+TouchableCollection tc(UsedCameraS::gateCamera);
 Vector2 arrowDirection;
 MouseState mouseState = MouseState::editing;
 [[nodiscard]] bool isMouseState(MouseState ms) { return ms == mouseState; }
@@ -17,6 +22,19 @@ void _initGateCamera() {
       Vector2{float(GetScreenWidth()) / 2, float(GetScreenHeight()) / 2};
   GateWindow::camera2d = Camera2D{
       .offset = middle, .target = {0, 0}, .rotation = 0.0f, .zoom = 1.0f};
+}
+void _deleteGate() {
+  if (auto touchable = GateWindow::tc.getSelected()) {
+    auto it =
+        std::find_if(gates.begin(), gates.end(), [touchable](const auto &x) {
+          return x.get() == touchable;
+        });
+    if (it == gates.end()) {
+      Debugger::push_message("The gates vec doesn;t have the object.");
+      return;
+    }
+    gates.erase(it);
+  }
 }
 
 Camera2D getCamera() { return camera2d; }
@@ -59,7 +77,7 @@ void _cameraMove() {
     Debugger::push_message(std::to_string(camera2d.zoom));
   }
   camera2d.zoom = Clamp(camera2d.zoom, 0.1, 4);
-  camera2d.target += Vector2Normalize(arrowDirection)/camera2d.zoom;
+  camera2d.target += Vector2Normalize(arrowDirection) / camera2d.zoom;
 }
 void update() {
   _arrowUpdate();
@@ -75,13 +93,19 @@ void create_gate(const Chars &gateName) {
   using namespace GateName;
   using std::make_unique;
   Gate gate;
-  auto mouseGlobalPos = getGlobalMousePosition(UsedCamera::gateCamera);
+  auto mouseGlobalPos = getGlobalMousePosition(UsedCameraS::gateCamera);
   if (gateName == AND) {
     gate = make_unique<AndGate>(&tc, mouseGlobalPos, "AND");
   } else if (gateName == OR) {
     gate = make_unique<OrGate>(&tc, mouseGlobalPos, "OR");
   } else if (gateName == NOT) {
     gate = make_unique<NotGate>(&tc, mouseGlobalPos, "NOT");
+  } else if (gateName == NOR) {
+    gate = make_unique<NorGate>(&tc, mouseGlobalPos, "NOR");
+  } else if (gateName == NAND) {
+    gate = make_unique<NAndGate>(&tc, mouseGlobalPos, "NAND");
+  } else if (gateName == XOR) {
+    gate = make_unique<XorGate>(&tc, mouseGlobalPos, "XOR");
   } else if (gateName == LIGHT) {
     gate = make_unique<Light>(&tc, mouseGlobalPos, "LIGHT");
   } else if (gateName == SWITCH) {
@@ -103,9 +127,9 @@ int textspace = 3;
 int fontSize = 11;
 void draw() {
   for (usize i = 0; i < bq.size(); i++) {
-    float y_offset = float(textspace + fontSize) * i;
+    float y_offset = float(textspace + fontSize) * float(i);
     auto pos = positon + Vector2{0, y_offset};
-    DrawText(bq.at(i), pos);
+    drawText(bq.at(i), pos);
   }
 }
 void push_message(const Chars &&text) { bq.push(text); }
@@ -115,7 +139,7 @@ void push_message(const Chars &text) { bq.push(text); }
 namespace GameManager::UI {
 
 UIState currentState = UIState::NOTIHING;
-TouchableCollection tc(UsedCamera::noCamera);
+TouchableCollection tc(UsedCameraS::noCamera);
 Vec<Chars> _menuBar() {
   using namespace GateWindow;
   using namespace Menu_Options;
@@ -134,7 +158,7 @@ Vec<Chars> _menuBar() {
 }
 using namespace GameManager::GateName;
 using namespace Menu_Options;
-SelectBar _selectBar(&tc, Vector2{0, 0}, _menuBar(), BAR_SIZE, 14);
+SelectBar _selectBar(&tc, Vector2{0, 0}, _menuBar(), BAR_SIZE, 14,TextPositionS::center);
 SearchBar _searchBar(&tc, Vector2{0, 0}, GATES_NAME);
 UIState _nextState(UIState current_state) {
   switch (current_state) {
@@ -149,8 +173,10 @@ UIState _nextState(UIState current_state) {
         if (selectedOption == CREATE)
           return UIState::CREATE_MENU;
         else if (selectedOption == MOUSE_TOGGLE) {
-          GateWindow::_toggleMouseState();
-          return UIState::NOTIHING;
+          // GateWindow::_toggleMouseState();
+          return UIState::MOUSE_CHANGE;
+        } else if (selectedOption == DELETE) {
+          return UIState::DELETE;
         }
       } else {
         return UIState::NOTIHING;
@@ -167,6 +193,10 @@ UIState _nextState(UIState current_state) {
       }
     }
     break;
+  case UIState::MOUSE_CHANGE:
+    return UIState::NOTIHING;
+  case UIState::DELETE:
+    return UIState::NOTIHING;
   }
   return current_state;
 }
@@ -190,6 +220,12 @@ void _stateInit(UIState currentState) {
     _selectBar.setPos(GetMousePosition());
     _selectBar.toSelected();
     break;
+  case UIState::MOUSE_CHANGE:
+    GateWindow::_toggleMouseState();
+    break;
+  case UIState::DELETE:
+    GateWindow::_deleteGate();
+    break;
   }
 }
 void draw() {
@@ -201,6 +237,10 @@ void draw() {
     break;
   case UIState::CREATE_MENU:
     _searchBar.draw();
+  case UIState::MOUSE_CHANGE:
+    break;
+  case UIState::DELETE:
+    break;
   }
 }
 void update() {
@@ -213,22 +253,38 @@ void update() {
   case UIState::CREATE_MENU:
     _searchBar.CharUpdate();
     break;
+  case UIState::MOUSE_CHANGE:
+    break;
+  case UIState::DELETE:
+    break;
   }
 }
 } // namespace GameManager::UI
 namespace GameManager {
 
 void tcUpdate() {
-  UI::tc.click_update();
-  GateWindow::tc.click_update();
+  if (UI::tc.click_update())
+    return;
+  if (GateWindow::tc.click_update())
+    return;
 }
-Vector2 getGlobalMousePosition(const UsedCamera camera) {
+Vector2 getGlobalMousePosition(const UsedCameraS camera) {
   switch (camera) {
-  case UsedCamera::noCamera:
+  case UsedCameraS::noCamera:
     return GetMousePosition();
-  case UsedCamera::gateCamera:
+  case UsedCameraS::gateCamera:
     return GetScreenToWorld2D(GetMousePosition(), GateWindow::camera2d);
   }
 }
-void init() { GateWindow::_initGateCamera(); }
+
+void init() {
+  GateWindow::_initGateCamera();
+  Resource::_init();
+}
 } // namespace GameManager
+void Resource::_init() {
+  Fonts::LUMITIVE_FONT = LoadFont("./Resources/fonts/luminova.otf");
+}
+
+// extern initilize
+Font Resource::Fonts::LUMITIVE_FONT{};

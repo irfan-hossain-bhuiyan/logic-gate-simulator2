@@ -11,23 +11,24 @@ Touchable::~Touchable() {
     child_to->erase(this);
   }
 }
-Touchable::Touchable(TouchableCollection* const tc):child_to(tc) {
+Touchable::Touchable(TouchableCollection *const tc) : child_to(tc) {
   tc->push_back(this);
 }
-TouchableCollection::TouchableCollection(UsedCamera camera) : _camera(camera) {}
+TouchableCollection::TouchableCollection(UsedCameraS camera) : _camera(camera) {}
 bool Touchable::is_touching() {
-  return child_to == nullptr ? false : this == child_to->touching;
+  return child_to == nullptr ? false : this == child_to->_touching;
 }
 bool Touchable::is_selected() {
-  return child_to == nullptr ? false : this == child_to->lastSelected;
+  return child_to == nullptr ? false : this == child_to->_lastSelected;
 }
-//void Touchable::add_to(TouchableCollection *tc) {
-//  if (child_to != nullptr) {
-//    child_to->erase(this);
-//  }
-//  child_to = tc;
-//  tc->push_back(this);
-//}
+const Touchable *TouchableCollection::getSelected() { return _lastSelected; }
+// void Touchable::add_to(TouchableCollection *tc) {
+//   if (child_to != nullptr) {
+//     child_to->erase(this);
+//   }
+//   child_to = tc;
+//   tc->push_back(this);
+// }
 bool Touchable::is_clicked() {
   return is_selected() &&
          IsMouseButtonPressed(MOUSE_BUTTON_LEFT); // This works because for
@@ -47,18 +48,18 @@ void TouchableCollection::erase(Touchable *touchable) {
 
 bool TouchableCollection::click_update() {
   using namespace GameManager;
-  touching = nullptr;
-  Vector2 mouseWorldPos=getGlobalMousePosition(_camera);
-   for (auto x : touchables) {
+  _touching = nullptr;
+  Vector2 mouseWorldPos = getGlobalMousePosition(_camera);
+  for (auto x : touchables) {
     if (x->_checkPointCollision(mouseWorldPos)) {
-      touching = x;
+      _touching = x;
       break;
     }
   }
   if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-    lastSelected = touching;
+    _lastSelected = _touching;
   }
-  return touching != nullptr;
+  return _touching != nullptr;
 }
 void InputBar::_cursor_move_right() {
   cursor_position = std::min(cursor_position + 1, (int)input_text.length());
@@ -100,10 +101,10 @@ bool InputBar::_checkPointCollision(Vector2 pos) {
   return CheckCollisionPointRec(pos, rect);
 }
 
-InputBar::InputBar(TouchableCollection *tc, Rectangle rect, int fontSize)
+InputBar::InputBar(TouchableCollection *tc, Rectangle rect, float fontSize)
     : Touchable(tc), rect(rect), _fontSize(fontSize) {}
 InputBar::InputBar(TouchableCollection *tc, Rectangle rect,
-                   const Chars &ref_text, int fontSize)
+                   const Chars &ref_text, float fontSize)
     : Touchable(tc), rect(rect), ref_text(ref_text), _fontSize(fontSize) {}
 InputBar::InputBar(TouchableCollection *tc, float x, float y, float width,
                    float height)
@@ -120,19 +121,19 @@ bool InputBar::TextUpdate() {
 void InputBar::draw() {
   auto [text, color] = _rendered_text();
   drawRectangleWithLines(rect, WHITE, BLACK, is_selected() ? 2.0 : 1.0);
-  Vector2 pos = rect_pos(rect);
-  pos += Vector2{5, 5};
-  DrawText(text, pos, _fontSize);
+  auto textPos=textPosition(rect, text, textPositionS,_fontSize);
+  RectSize rs=MeasureTextEx(Resource::Fonts::LUMITIVE_FONT,text.c_str(),_fontSize,0);
+  // DrawTextEx(text, pos, _fontSize);
+  using namespace Resource::Fonts;
+  drawText(text, textPos, _fontSize);
+  DrawRectangleLinesEx(rectFromPos(textPos,rs), 2, RED);
 }
 Chars InputBar::get_text() { return input_text; }
 void Label::draw(float linewidth) {
   DrawRectangleGradientHRec(rect, colorL, colorR);
   DrawRectangleLinesEx(rect, linewidth, BLACK);
-  Vector2 center = middle(rect);
-  float text_width = float(MeasureText(text.c_str(), font_size));
-  float text_height = float(font_size);
-  Vector2 text_pos = center - Vector2{text_width, text_height} / 2;
-  DrawText(text, text_pos, font_size, BLACK);
+  Vector2 _textPos = textPosition(rect, text, textPos);
+  drawText(text, _textPos, fontSize, BLACK);
 }
 bool Button::_checkPointCollision(Vector2 pos) {
   return CheckCollisionPointRec(pos, label.rect);
@@ -153,7 +154,7 @@ void SelectBar::draw() {
     Rectangle button_rect =
         Rectangle{_position.x, _position.y + float(i) * _rectSize.height,
                   _rectSize.width, _rectSize.height};
-    auto btn = Label(button_rect, options[i]);
+    auto btn = Label(button_rect, options[i],_textPosS);
     btn.draw(i == highlighted ? 3.0 : 1.0);
   }
 }
@@ -189,6 +190,6 @@ void SearchBar::setPos(Vector2 pos) {
   this->ib.setPos(pos);
   this->sb.setPos(pos + Vector2{0, this->ib.rect.height});
 }
-void Touchable::toSelected() { child_to->lastSelected = this; }
+void Touchable::toSelected() { child_to->_lastSelected = this; }
 void SearchBar::toSelected() { this->ib.toSelected(); }
-bool TouchableCollection::isSelected() { return lastSelected != nullptr; }
+bool TouchableCollection::isSelected() { return _lastSelected != nullptr; }

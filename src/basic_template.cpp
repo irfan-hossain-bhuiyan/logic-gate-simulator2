@@ -1,4 +1,6 @@
 #include "basic_template.h"
+#include "globals.h"
+#include "ui.h"
 #include <algorithm>
 #include <cstring>
 #include <queue>
@@ -41,14 +43,14 @@ char Chars::operator[](int a) {
   }
   return '\0';
 }
-Error Chars::push_back(char c) {
+ErrorS Chars::push_back(char c) {
   if (length() + 1 < CHARS_MAX_SIZE) {
     *end_ptr = c;
     end_ptr++;
     *end_ptr = '\0';
-    return Error::OK;
+    return ErrorS::OK;
   }
-  return Error::OVERFLOW_ERROR;
+  return ErrorS::OVERFLOW_ERROR;
 }
 char Chars::pop_back() {
   if (length() == 0) {
@@ -59,28 +61,28 @@ char Chars::pop_back() {
   *end_ptr = '\0';
   return ans;
 }
-Error Chars::insert(char c, u8 position) {
+ErrorS Chars::insert(char c, u8 position) {
   if (!(length() + 1 < CHARS_MAX_SIZE)) {
-    return Error::OVERFLOW_ERROR; // Overflow erroR
+    return ErrorS::OVERFLOW_ERROR; // Overflow erroR
   }
   if (position > length())
-    return Error::OUTOFBOUND_ERROR; // Out of bound error.
+    return ErrorS::OUTOFBOUND_ERROR; // Out of bound error.
   auto pointer = core.begin() + position;
   memmove(pointer + 1, pointer, end_ptr - pointer);
   *pointer = c;
   end_ptr++;
   *end_ptr = '\0';
-  return Error::OK;
+  return ErrorS::OK;
 }
-Error Chars::erase(u8 position) {
+ErrorS Chars::erase(u8 position) {
   if (!(position < length()))
-    return Error::OUTOFBOUND_ERROR;
+    return ErrorS::OUTOFBOUND_ERROR;
   auto pointer = core.begin() + position;
   auto pointer1 = pointer + 1;
   memmove(pointer, pointer1, end_ptr - pointer1);
   end_ptr--;
   *end_ptr = '\0';
-  return Error::OK;
+  return ErrorS::OK;
 }
 u8 Chars::length() const { return this->end_ptr - this->begin(); }
 bool Chars::empty() const { return this->begin() == this->end_ptr; }
@@ -132,6 +134,7 @@ Rectangle rectFromPos(Vector2 position, RectSize rectSize) {
   return Rectangle{position.x, position.y, rectSize.width, rectSize.height};
 }
 void DrawCircleCir(Circle cir, Color color) {
+
   DrawCircle(cir.center.x, cir.center.y, cir.radius, color);
 }
 bool CheckCollisionPointCircle(Vector2 point, Circle cir) {
@@ -266,26 +269,28 @@ std::vector<Chars> fuzzySearch(const Chars &query,
   return ans;
 }
 
-Vector2 rect_pos(const Rectangle &rect) { return Vector2{rect.x, rect.y}; }
+Vector2 rectPos(const Rectangle &rect) { return Vector2{rect.x, rect.y}; }
 void drawRectangleWithLines(Rectangle rect, Color rect_color, Color line_color,
                             float width) {
   DrawRectangleRec(rect, rect_color);
   DrawRectangleLinesEx(rect, width, line_color);
 }
-Vector2 position(Rectangle rect) { return Vector2{rect.x, rect.y}; }
-Vector2 middle(Rectangle rect) {
-  return position(rect) + Vector2{rect.width, rect.height} / 2;
+Vector2 rectCenter(Rectangle rect) {
+  return rectPos(rect) + Vector2{rect.width, rect.height} / 2;
 }
 void DrawRectangleGradientHRec(Rectangle rect, Color color1, Color color2) {
   DrawRectangleGradientH(rect.x, rect.y, rect.width, rect.height, color1,
                          color2);
 }
-void DrawText(const std::string &text, Vector2 position, int fontSize,
+void drawText(const std::string &text, Vector2 position, float fontSize,
               Color color) {
-  DrawText(text.c_str(), position.x, position.y, fontSize, color);
+  using namespace Resource::Fonts;
+  DrawTextEx(LUMITIVE_FONT, text.c_str(), position, fontSize, 0, color);
 }
-void DrawText(Chars text, Vector2 position, int fontSize, Color color) {
-  DrawText(text.c_str(), position.x, position.y, fontSize, color);
+void drawText(const Chars &text, Vector2 position, float fontSize,
+              Color color) {
+  using namespace Resource::Fonts;
+  DrawTextEx(LUMITIVE_FONT, text.c_str(), position, fontSize, 0, color);
 }
 // Example usage:
 void DrawCircleLinesCir(Circle cir, Color color, float width) {
@@ -308,3 +313,58 @@ std::ostream &operator<<(std::ostream &os, const Chars &ch) {
   os << ch.c_str();
   return os;
 }
+template <typename T> void BoundedQueue<T>::push(T item) {
+  if (queue.size() == max_size) {
+    queue.pop_front();
+  }
+  queue.push_back(item);
+}
+template <typename T> usize BoundedQueue<T>::size() { return queue.size(); }
+template <typename T> ErrorS BoundedQueue<T>::pop() {
+  if (queue.empty()) {
+    return ErrorS::OUTOFBOUND_ERROR;
+  }
+  queue.pop_front();
+  return ErrorS::OK;
+}
+template <typename T> auto BoundedQueue<T>::begin() { return queue.begin(); }
+template <typename T> auto BoundedQueue<T>::end() { return queue.end(); }
+template <typename T> T BoundedQueue<T>::at(usize x) { return queue.at(x); }
+template <typename T>
+std::vector<T> vectorNemement(usize n, const std::function<T()> &func) {
+  std::vector<T> vec;
+  vec.reserve(n); // Reserve space to avoid reallocations
+  std::generate_n(std::back_inserter(vec), n, [func]() { return func(); });
+  return vec;
+}
+RectSize measureText(const Chars &text, float size) {
+  using namespace Resource::Fonts;
+  return MeasureTextEx(LUMITIVE_FONT, text.c_str(), size, 0);
+}
+Vector2 textPosition(Rectangle rect, const Chars &text, TextPositionS textPos,
+                     float fontSize, float border) {
+  RectSize textSize = measureText(text, fontSize);
+  float textPosy = rectCenter(rect).y - (textSize.height / 2);
+  switch (textPos) {
+  case TextPositionS::left: {
+    float textPosX = rect.x + border;
+    return Vector2{textPosX, textPosy};
+  } break;
+  case TextPositionS::right: {
+    float textPosX = rect.x + rect.width - textSize.width - border;
+    return Vector2{textPosX, textPosy};
+  } break;
+  case TextPositionS::center: {
+    auto textRect = rectFromCenter(rectCenter(rect), textSize);
+    return rectPos(textRect);
+  } break;
+  default:
+    throw std::runtime_error("All edge case not completed.");
+  }
+}
+Vector2 textPosition(Rectangle rect, const Chars &text, float size,
+                     float border) {
+  return textPosition(rect, text, TextPositionS::left, size, border);
+}
+// Templates declaration
+template class BoundedQueue<Chars>;

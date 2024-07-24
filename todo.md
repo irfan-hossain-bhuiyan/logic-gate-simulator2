@@ -1,4 +1,5 @@
-Spline curve isn't drawn.
-Gate clear_point isn't created.It wis a function that will remove all the non linked point.
-Gate resize_point isn't created.It will position the point.
-GatePoint onClick()
+- input should start from the middle.
+- Pressing arrow key will go down the input and select it.
+- Increase the size of those gates.
+- Adding multiple selection
+- Add a JK filp-flop

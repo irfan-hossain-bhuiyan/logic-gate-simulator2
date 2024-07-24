@@ -4,6 +4,7 @@
 int main() {
   const int WIDTH = 800;
   const int HEIGHT = 600;
+  SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 
   InitWindow(WIDTH, HEIGHT, "Input test.");
   using namespace GameManager;

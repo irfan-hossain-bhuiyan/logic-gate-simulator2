@@ -18,6 +18,15 @@ float m_Gate::_rectHeight() {
 float m_Gate::_inPointDistance() {
   return std::max(MIN_HEIGHT / float(_inPointnr() + 1), MIN_POINT_DISTANCE);
 }
+m_Gate::~m_Gate() {
+  for (auto &x : _inPoints)
+    std::for_each(x->splines.begin(), x->splines.end(),
+                  [](auto ptr) { delete ptr; });
+
+  for (auto &x : _outPoints)
+    std::for_each(x->splines.begin(), x->splines.end(),
+                  [](auto ptr) { delete ptr; });
+}
 RectSize m_Gate::_rectsize() { return {WIDTH, _rectHeight()}; }
 void m_Gate::_pointDraw() {
   for (auto &x : this->_inPoints) {
@@ -34,7 +43,11 @@ void m_Gate::draw() {
 }
 void m_Gate::_boxDraw(Color color) {
 
-  float lineWidth = is_clicking() ? 3.0 : 1.0;
+  float lineWidth = 1.0f;
+  if (is_selected())
+    lineWidth = 3.0f;
+  else if (is_touching())
+    lineWidth = 2.0f;
   Label(_rect(), _text, color).draw(lineWidth);
 }
 template <GPs T> Vector2 GatePoint<T>::_world_pos() {
@@ -88,12 +101,12 @@ void m_Gate::_onClick() {
   if (cs->_in_ptr == nullptr) {
     IGP &gp = _addGatePoint();
     gp->_onClick();
+    _refresh();
   }
 }
 IGP &m_Gate::_addGatePoint() {
   auto newGatePoint = std::make_unique<m_IGP>(*this);
   _inPoints.push_back(std::move(newGatePoint));
-  this->_resizePoint();
   return _inPoints.back();
 }
 
@@ -103,7 +116,8 @@ template <GPs STATE> void GatePoint<STATE>::_update() {
   }
 }
 template <GPs STATE> void GatePoint<STATE>::_onClick() {
-
+  if (!GateWindow::isMouseState(GateWindow::MouseState::editing))
+    return;
   if constexpr (STATE == GPs::out) {
     if (m_Spline::CURRENT_SPLINE == nullptr) {
       m_Spline::CURRENT_SPLINE =
@@ -186,8 +200,8 @@ template <GPs STATE> void detach(m_GatePoint<STATE> &gp, m_Spline &spline) {
     gp.splines.clear();
     spline._in_ptr = nullptr;
   } else if constexpr (STATE == GPs::out) {
-    Error err = eraseItem(gp.splines, &spline);
-    if (err != Error::OK) {
+    ErrorS err = eraseItem(gp.splines, &spline);
+    if (err != ErrorS::OK) {
       Debugger::push_message("The Gatepoint don't contain spline");
     }
     if (spline._out_ptr != &gp) {
@@ -271,10 +285,10 @@ void m_Spline::draw() {
   using namespace GameManager;
   auto in_pos = _in_ptr != nullptr
                     ? _in_ptr->_world_pos()
-                    : getGlobalMousePosition(UsedCamera::gateCamera);
+                    : getGlobalMousePosition(UsedCameraS::gateCamera);
   auto out_pos = _out_ptr != nullptr
                      ? _out_ptr->_world_pos()
-                     : getGlobalMousePosition(UsedCamera::gateCamera);
+                     : getGlobalMousePosition(UsedCameraS::gateCamera);
   auto color =
       _out_ptr != nullptr ? (_out_ptr->booleanState ? RED : WHITE) : WHITE;
   DrawLineBezierCubic(in_pos, out_pos, in_pos + Vector2{-BEZIER_POINT, 0},
@@ -354,4 +368,23 @@ void m_Spline::_signalPass() {
 void m_Spline::signalPasses() {
   for (auto &x : SPLINES)
     x->_signalPass();
+}
+void NorGate::_circuitUpdate() { bool output = false; 
+	for(const auto& x:_inPoints){
+		output |=x->booleanState;
+	}
+	_outPoints.front()->booleanState=!output;
+}
+void XorGate::_circuitUpdate() { bool output = false; 
+	for(const auto& x:_inPoints){
+		output ^=x->booleanState;
+	}
+	_outPoints.front()->booleanState=output;
+}
+void NAndGate::_circuitUpdate(){
+	bool output=false;
+	for(const auto& x:_inPoints){
+		output &=x->booleanState;
+	}
+	_outPoints.front()->booleanState=!output;
 }
