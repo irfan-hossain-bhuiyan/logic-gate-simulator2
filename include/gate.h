@@ -4,6 +4,7 @@
 #include "object.h"
 #include "ui.h"
 #include <raylib.h>
+#include <span>
 #include <unordered_set>
 enum class GatePointState { in, out };
 class m_Spline;
@@ -26,8 +27,10 @@ template <GPs STATE> void detach(m_GatePoint<STATE> &gp, m_Spline &sp);
 template <GatePointState STATE> class m_GatePoint : Touchable {
 private:
   constexpr static float RADIUS = 3.0;
+  constexpr static float TEXT_OFFSET = 2.0;
   constexpr static float OUTLINE = 2.0;
   const m_Gate &_gate;
+  const Chars _text = "";
   Vector2 relativePos;
   Vec<m_Spline *> splines;
   Vector2 _world_pos();
@@ -41,6 +44,7 @@ public:
   bool booleanState = false; // It needed to be public.As friend doesn't work on
                              // inherited class.
   m_GatePoint(const m_Gate &gate);
+  m_GatePoint(const m_Gate &gate, const Chars &text);
   void _draw();
   m_Spline *get_spline()
     requires(STATE == GPs::in);
@@ -123,8 +127,26 @@ protected:
         _outPointnr(outPointnrMin), _dynamicInput(dynamicInput), _text(text) {
     _init();
   }
-  m_Gate(const m_Gate &mg) = delete;
-  m_Gate(const m_Gate &&mg) = delete;
+  m_Gate(TouchableCollection *tc, Vector2 pos, float width, float minHeight,
+         const Chars &text, usize inPointnrMin, usize outPointnrMin,
+         bool dynamicInput)
+      : Draggable(tc, pos), _inPointnrMin(inPointnrMin),
+        _outPointnr(outPointnrMin), _width(width), _minHeight(minHeight),
+        _dynamicInput(dynamicInput), _text(text) {
+    _init();
+  }
+  m_Gate(TouchableCollection *tc, Vector2 pos, float width, float minHeight,
+         const Chars &text, bool dynamicInput,
+         std::initializer_list<const Chars> inputText,
+         std::initializer_list<const Chars> outputText)
+      : Draggable(tc, pos), _inPointnrMin(inputText.size()),
+        _outPointnr(outputText.size()), _width(width), _minHeight(minHeight),
+        _dynamicInput(dynamicInput), _text(text) {
+    _init(inputText, outputText);
+  }
+
+  // m_Gate(const m_Gate &mg) = delete;
+  // m_Gate(const m_Gate &&mg) = delete;
 
 protected:
   IGPs _inPoints;
@@ -135,11 +157,13 @@ protected:
 private:
   const usize _inPointnrMin = 2;
   const usize _outPointnr = 1;
-  const float WIDTH = 30;
-  const float MIN_HEIGHT = 40;
-  const bool _dynamicInput = true;
+  const float _width = 30;
+  const float _minHeight = 40;
+  const bool _dynamicInput = false;
   Chars _text = "";
   void _init();
+  void _init(std::span<const Chars> inputText,
+             std::span<const Chars> outputText);
   void _refresh();
   void _resizePoint();
   void _clearPoint();
@@ -211,7 +235,7 @@ public:
 
 public:
   XorGate(TouchableCollection *tc, Vector2 pos,
-           const Chars &text = GateName::NAND)
+          const Chars &text = GateName::NAND)
       : m_Gate(tc, pos, text, 2, 1, false) {}
 };
 
@@ -243,4 +267,50 @@ public: // Constructor
   Switch(TouchableCollection *tc, Vector2 pos,
          const Chars &text = GateName::SWITCH)
       : m_Gate(tc, pos, text, 0, 1, false) {}
+};
+enum class ClkTriggerS {
+  up,
+  down,
+};
+struct ClkTrigger {
+  ClkTriggerS clkTS = ClkTriggerS::down;
+  bool lastClkUp = false;
+  bool isTriggered(bool isClkUP);
+};
+enum class LatchS {
+  q,
+  nQ,
+  invalid,
+};
+class RSff : public m_Gate {
+private:
+  ClkTrigger clkTrigger;
+  LatchS savedState = LatchS::nQ;
+  //  void _eventUpdate() override final;
+  void _updateOutput();
+
+public:
+  ClkTriggerS clkTriggerState;
+//  void draw() override final;
+  void _circuitUpdate() override final;
+  void setClkTriggerState(ClkTriggerS state);
+
+public: // Constructor
+  RSff(TouchableCollection *tc, Vector2 pos);
+};
+
+class JKff : public m_Gate {
+private:
+  ClkTrigger clkTrigger;
+  //  void _eventUpdate() override final;
+  bool savedState = false; // As it doesn't have invalid state.
+  void _updateOutput();
+
+public:
+//  void draw() override final;
+  void _circuitUpdate() override final;
+  void setClkTriggerState(ClkTriggerS state);
+
+public: // Constructor
+  JKff(TouchableCollection *tc, Vector2 pos);
 };

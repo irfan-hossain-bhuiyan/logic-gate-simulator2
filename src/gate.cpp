@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <memory>
 #include <raylib.h>
+#include <span>
 #include <unordered_set>
 
 m_Spline *m_Spline::CURRENT_SPLINE = nullptr;
@@ -13,10 +14,10 @@ usize m_Gate::_inPointnr() { return _inPoints.size(); }
 float m_Gate::_rectHeight() {
   auto temp = std::max(_inPointnr(), _outPointnr);
   auto pointHeight = MIN_POINT_DISTANCE * float(temp + 1);
-  return std::max(pointHeight, MIN_HEIGHT);
+  return std::max(pointHeight, _minHeight);
 }
 float m_Gate::_inPointDistance() {
-  return std::max(MIN_HEIGHT / float(_inPointnr() + 1), MIN_POINT_DISTANCE);
+  return std::max(_minHeight / float(_inPointnr() + 1), MIN_POINT_DISTANCE);
 }
 m_Gate::~m_Gate() {
   for (auto &x : _inPoints)
@@ -27,7 +28,7 @@ m_Gate::~m_Gate() {
     std::for_each(x->splines.begin(), x->splines.end(),
                   [](auto ptr) { delete ptr; });
 }
-RectSize m_Gate::_rectsize() { return {WIDTH, _rectHeight()}; }
+RectSize m_Gate::_rectsize() { return {_width, _rectHeight()}; }
 void m_Gate::_pointDraw() {
   for (auto &x : this->_inPoints) {
     x->_draw();
@@ -78,6 +79,20 @@ m_GatePoint<T>::m_GatePoint(const m_Gate &gate)
 template <GPs T> void GatePoint<T>::_draw() {
   DrawCircleCir(_cir(), WHITE);
   DrawCircleLinesCir(_cir(), BLACK, is_touching() ? OUTLINE : 1);
+  if (_text.empty())
+    return;
+  auto size = measureText(_text);
+  auto pos = _world_pos();
+  float textPosX;
+  if constexpr (T == GPs::in) {
+    textPosX = pos.x + RADIUS + TEXT_OFFSET;
+  }
+  if constexpr (T == GPs::out) {
+    textPosX = pos.x - RADIUS - TEXT_OFFSET - size.width;
+  }
+  auto textPosY = pos.y - size.height / 2;
+  Vector2 textPos = {textPosX, textPosY};
+  drawText(_text, textPos);
 }
 // template <GPs STATE> void GatePoint<STATE>::addSpline(Spline *const spline) {
 //   if constexpr (STATE == GPs::in) {
@@ -229,7 +244,7 @@ void m_Gate::_resizePoint() {
   }
   for (usize i = 0; i < this->_outPointnr; i++) {
     _outPoints[i]->_setRelativePos(
-        {WIDTH + 2, float(i + 1) * this->_outPointDistance()});
+        {_width + 2, float(i + 1) * this->_outPointDistance()});
   }
 }
 void m_Gate::_clearPoint() {
@@ -247,6 +262,19 @@ void m_Gate::_clearPoint() {
 float m_Gate::_outPointDistance() {
   return _rectHeight() / float(_outPointnr + 1);
 }
+void m_Gate::_init(std::span<const Chars> inputText,
+                   std::span<const Chars> outputText) {
+  _inPoints.reserve(_inPointnrMin);
+  for (usize i = 0; i < _inPointnrMin; i++) {
+    auto point = std::make_unique<m_IGP>(*this, inputText[i]);
+    _inPoints.push_back(std::move(point));
+  }
+  for (usize i = 0; i < _outPointnr; i++) {
+    auto point = std::make_unique<m_OGP>(*this, outputText[i]);
+    _outPoints.push_back(std::move(point));
+  }
+  this->_resizePoint();
+}
 void m_Gate::_init() {
   _inPoints.reserve(_inPointnrMin);
   for (usize i = 0; i < _inPointnrMin; i++) {
@@ -259,7 +287,6 @@ void m_Gate::_init() {
   }
   this->_resizePoint();
 }
-
 void m_Gate::update() {
   using namespace GateWindow;
   if (this->is_clicked() && isMouseState(MouseState::editing)) {
@@ -369,22 +396,97 @@ void m_Spline::signalPasses() {
   for (auto &x : SPLINES)
     x->_signalPass();
 }
-void NorGate::_circuitUpdate() { bool output = false; 
-	for(const auto& x:_inPoints){
-		output |=x->booleanState;
-	}
-	_outPoints.front()->booleanState=!output;
+void NorGate::_circuitUpdate() {
+  bool output = false;
+  for (const auto &x : _inPoints) {
+    output |= x->booleanState;
+  }
+  _outPoints.front()->booleanState = !output;
 }
-void XorGate::_circuitUpdate() { bool output = false; 
-	for(const auto& x:_inPoints){
-		output ^=x->booleanState;
-	}
-	_outPoints.front()->booleanState=output;
+void XorGate::_circuitUpdate() {
+  bool output = false;
+  for (const auto &x : _inPoints) {
+    output ^= x->booleanState;
+  }
+  _outPoints.front()->booleanState = output;
 }
-void NAndGate::_circuitUpdate(){
-	bool output=false;
-	for(const auto& x:_inPoints){
-		output &=x->booleanState;
-	}
-	_outPoints.front()->booleanState=!output;
+void NAndGate::_circuitUpdate() {
+  bool output = false;
+  for (const auto &x : _inPoints) {
+    output &= x->booleanState;
+  }
+  _outPoints.front()->booleanState = !output;
 }
+template <GPs STATE>
+m_GatePoint<STATE>::m_GatePoint(const m_Gate &gate, const Chars &text)
+    : Touchable(gate.get_tc()), _gate(gate), _text(text) {}
+void RSff::_updateOutput() {
+  switch (savedState) {
+  case LatchS::q:
+    _outPoints[0]->booleanState = true;
+    _outPoints[1]->booleanState = false;
+    break;
+  case LatchS::nQ:
+    _outPoints[0]->booleanState = false;
+    _outPoints[1]->booleanState = true;
+    break;
+  case LatchS::invalid:
+    _outPoints[0]->booleanState = true;
+    _outPoints[1]->booleanState = true;
+    break;
+  }
+}
+
+void RSff::_circuitUpdate() {
+  auto R_S = _inPoints[0]->booleanState;
+  auto clk_S = _inPoints[1]->booleanState;
+  auto S_S = _inPoints[2]->booleanState;
+  if (clkTrigger.isTriggered(clk_S)) {
+    if (R_S == false && S_S == true)
+      savedState = LatchS::q;
+    if (R_S == true && S_S == false)
+      savedState = LatchS::nQ;
+    if (R_S == true && S_S == true)
+      savedState = LatchS::invalid;
+  }
+  _updateOutput();
+}
+void JKff::_updateOutput() {
+  _outPoints[0]->booleanState = savedState;
+  _outPoints[1]->booleanState = !savedState;
+}
+void JKff::_circuitUpdate() {
+  auto J_S = _inPoints[0]->booleanState;
+  auto clk_S = _inPoints[1]->booleanState;
+  auto K_S = _inPoints[2]->booleanState;
+  if (clkTrigger.isTriggered(clk_S)) {
+    if (J_S == false && K_S == true)
+      savedState = false;
+    if (J_S == true && K_S == false)
+      savedState = true;
+    if (J_S == true && K_S == true)
+      savedState = !savedState;
+  }
+  _updateOutput();
+}
+bool ClkTrigger::isTriggered(bool isClkUP) {
+  if (isClkUP == lastClkUp)
+    return false;
+  bool ans;
+  if (lastClkUp == false && clkTS == ClkTriggerS::up)
+    ans = true;
+  else if (lastClkUp == true && clkTS == ClkTriggerS::down)
+    ans = true;
+  else
+    ans = false;
+  lastClkUp = isClkUP;
+  return ans;
+}
+JKff::JKff(TouchableCollection *tc, Vector2 pos)
+    : m_Gate(tc, pos, 50.0f, 40.0f, GateName::JK_FF, false, {"J", "Clk", "K"},{"Q", "Q`"}) {}
+
+RSff::RSff(TouchableCollection *tc, Vector2 pos)
+      : m_Gate(tc, pos, 50.0f, 40.0f, GateName::RS_FF, false, {"R", "Clk", "S"},{"Q", "Q`"}) {}
+void RSff::setClkTriggerState(ClkTriggerS state){ clkTrigger.clkTS = state; }
+
+void JKff::setClkTriggerState(ClkTriggerS state){ clkTrigger.clkTS = state; }

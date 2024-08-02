@@ -2,11 +2,9 @@
 #include <cstdint>
 #include <deque>
 #include <memory>
-#include <ostream>
 #include <raylib.h>
 #include <raymath.h>
 #include <string>
-#include <type_traits>
 #include <utility>
 using i32 = int;
 using i64 = long long;
@@ -118,6 +116,7 @@ void drawText(std::string text, Vector2 position, float fontSize = 11.0f,
 
 void drawText(const Chars &text, Vector2 position, float fontSize = 11.0f,
               Color color = BLACK);
+RectSize measureText(const Chars& text,float fontSize=11.0f,float spacing=0);
 template <typename T> class BoundedQueue {
 public:
   BoundedQueue(size_t max_size) : max_size(max_size) {}

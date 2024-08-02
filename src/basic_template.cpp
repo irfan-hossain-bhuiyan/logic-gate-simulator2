@@ -135,7 +135,7 @@ Rectangle rectFromPos(Vector2 position, RectSize rectSize) {
 }
 void DrawCircleCir(Circle cir, Color color) {
 
-  DrawCircle(cir.center.x, cir.center.y, cir.radius, color);
+  DrawCircleV(cir.center, cir.radius, color);
 }
 bool CheckCollisionPointCircle(Vector2 point, Circle cir) {
   return CheckCollisionPointCircle(point, cir.center, cir.radius);
@@ -164,11 +164,11 @@ int levenshteinDistance(const std::string &s1, const std::string &s2) {
   std::vector<std::vector<int>> matrix(len1 + 1, std::vector<int>(len2 + 1));
 
   for (usize i = 0; i <= len1; ++i) {
-    matrix[i][0] = i;
+    matrix[i][0] = int(i);
   }
 
   for (usize j = 0; j <= len2; ++j) {
-    matrix[0][j] = j;
+    matrix[0][j] = int(j);
   }
 
   for (usize i = 1; i <= len1; ++i) {
@@ -279,8 +279,8 @@ Vector2 rectCenter(Rectangle rect) {
   return rectPos(rect) + Vector2{rect.width, rect.height} / 2;
 }
 void DrawRectangleGradientHRec(Rectangle rect, Color color1, Color color2) {
-  DrawRectangleGradientH(rect.x, rect.y, rect.width, rect.height, color1,
-                         color2);
+  DrawRectangleGradientEx(rect, color1,
+                         color2,color2,color1);
 }
 void drawText(const std::string &text, Vector2 position, float fontSize,
               Color color) {
@@ -310,7 +310,7 @@ Chars &Chars::operator=(const Chars &ch) noexcept {
   return *this;
 }
 std::ostream &operator<<(std::ostream &os, const Chars &ch) {
-  os << ch.c_str();
+  os << (ch.c_str());
   return os;
 }
 template <typename T> void BoundedQueue<T>::push(T item) {
@@ -337,10 +337,10 @@ std::vector<T> vectorNemement(usize n, const std::function<T()> &func) {
   std::generate_n(std::back_inserter(vec), n, [func]() { return func(); });
   return vec;
 }
-RectSize measureText(const Chars &text, float size) {
-  using namespace Resource::Fonts;
-  return MeasureTextEx(LUMITIVE_FONT, text.c_str(), size, 0);
-}
+//RectSize measureText(const Chars &text, float size) {
+//  using namespace Resource::Fonts;
+//  return MeasureTextEx(LUMITIVE_FONT, text.c_str(), size, 0);
+//}
 Vector2 textPosition(Rectangle rect, const Chars &text, TextPositionS textPos,
                      float fontSize, float border) {
   RectSize textSize = measureText(text, fontSize);
@@ -368,3 +368,7 @@ Vector2 textPosition(Rectangle rect, const Chars &text, float size,
 }
 // Templates declaration
 template class BoundedQueue<Chars>;
+
+RectSize measureText(const Chars& text,float fontSize,float spacing){
+	return MeasureTextEx(Resource::Fonts::LUMITIVE_FONT,text.c_str(),fontSize,spacing);
+}

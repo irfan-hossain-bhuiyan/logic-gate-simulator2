@@ -3,12 +3,9 @@
 #include "gate.h"
 #include "ui.h"
 #include <algorithm>
-#include <filesystem>
 #include <memory>
 #include <raylib.h>
 #include <raymath.h>
-#include <stdexcept>
-#include <system_error>
 namespace GameManager::GateWindow {
 TouchableCollection tc(UsedCameraS::gateCamera);
 Vector2 arrowDirection;
@@ -95,21 +92,25 @@ void create_gate(const Chars &gateName) {
   Gate gate;
   auto mouseGlobalPos = getGlobalMousePosition(UsedCameraS::gateCamera);
   if (gateName == AND) {
-    gate = make_unique<AndGate>(&tc, mouseGlobalPos, "AND");
+    gate = make_unique<AndGate>(&tc, mouseGlobalPos);
   } else if (gateName == OR) {
-    gate = make_unique<OrGate>(&tc, mouseGlobalPos, "OR");
+    gate = make_unique<OrGate>(&tc, mouseGlobalPos);
   } else if (gateName == NOT) {
-    gate = make_unique<NotGate>(&tc, mouseGlobalPos, "NOT");
+    gate = make_unique<NotGate>(&tc, mouseGlobalPos);
   } else if (gateName == NOR) {
-    gate = make_unique<NorGate>(&tc, mouseGlobalPos, "NOR");
+    gate = make_unique<NorGate>(&tc, mouseGlobalPos);
   } else if (gateName == NAND) {
-    gate = make_unique<NAndGate>(&tc, mouseGlobalPos, "NAND");
+    gate = make_unique<NAndGate>(&tc, mouseGlobalPos);
   } else if (gateName == XOR) {
-    gate = make_unique<XorGate>(&tc, mouseGlobalPos, "XOR");
+    gate = make_unique<XorGate>(&tc, mouseGlobalPos);
   } else if (gateName == LIGHT) {
-    gate = make_unique<Light>(&tc, mouseGlobalPos, "LIGHT");
+    gate = make_unique<Light>(&tc, mouseGlobalPos);
   } else if (gateName == SWITCH) {
-    gate = make_unique<Switch>(&tc, mouseGlobalPos, "SWITCH");
+    gate = make_unique<Switch>(&tc, mouseGlobalPos);
+  } else if (gateName == RS_FF) {
+    gate = make_unique<RSff>(&tc, mouseGlobalPos);
+  } else if (gateName == JK_FF) {
+    gate = make_unique<JKff>(&tc, mouseGlobalPos);
   } else {
     Debugger::push_message("Gate name is not addressed.");
     return;
@@ -158,7 +159,8 @@ Vec<Chars> _menuBar() {
 }
 using namespace GameManager::GateName;
 using namespace Menu_Options;
-SelectBar _selectBar(&tc, Vector2{0, 0}, _menuBar(), BAR_SIZE, 14,TextPositionS::center);
+SelectBar _selectBar(&tc, Vector2{0, 0}, _menuBar(), BAR_SIZE, 14,
+                     TextPositionS::center);
 SearchBar _searchBar(&tc, Vector2{0, 0}, GATES_NAME);
 UIState _nextState(UIState current_state) {
   switch (current_state) {
@@ -283,7 +285,7 @@ void init() {
 }
 } // namespace GameManager
 void Resource::_init() {
-  Fonts::LUMITIVE_FONT = LoadFont("./Resources/fonts/luminova.otf");
+  Fonts::LUMITIVE_FONT = LoadFont("./Resources/fonts/luminova_bold.otf");
 }
 
 // extern initilize

@@ -38,7 +38,9 @@ const Chars XOR = "XOR";
 const Chars XNOR = "XNOR";
 const Chars LIGHT = "LIGHT";
 const Chars SWITCH = "SWITCH";
-const Vec<Chars> GATES_NAME = {AND, OR, NOT, NOR, NAND, XOR, LIGHT, SWITCH};
+const Chars RS_FF = "RS\nFF";
+const Chars JK_FF = "JK\nFF";
+const Vec<Chars> GATES_NAME = {AND, OR, NOT, NOR, NAND, XOR, LIGHT, SWITCH,RS_FF,JK_FF};
 } // namespace GateName
 
 namespace UI {
