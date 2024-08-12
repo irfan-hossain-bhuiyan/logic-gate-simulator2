@@ -329,6 +329,10 @@ template <GPs STATE>
 bool m_GatePoint<STATE>::_checkPointCollision(Vector2 pos) {
   return CheckCollisionPointCircle(pos, _cir());
 }
+template <GPs STATE> void m_GatePoint<STATE>::toggleState() {
+  booleanState = !booleanState;
+}
+
 template <GPs STATE> bool m_GatePoint<STATE>::_is_disconnected() {
   return splines.empty();
 }
@@ -483,10 +487,26 @@ bool ClkTrigger::isTriggered(bool isClkUP) {
   return ans;
 }
 JKff::JKff(TouchableCollection *tc, Vector2 pos)
-    : m_Gate(tc, pos, 50.0f, 40.0f, GateName::JK_FF, false, {"J", "Clk", "K"},{"Q", "Q`"}) {}
+    : m_Gate(tc, pos, 50.0f, 40.0f, GateName::JK_FF, false, {"J", "Clk", "K"},
+             {"Q", "Q`"}) {}
 
 RSff::RSff(TouchableCollection *tc, Vector2 pos)
-      : m_Gate(tc, pos, 50.0f, 40.0f, GateName::RS_FF, false, {"R", "Clk", "S"},{"Q", "Q`"}) {}
-void RSff::setClkTriggerState(ClkTriggerS state){ clkTrigger.clkTS = state; }
+    : m_Gate(tc, pos, 50.0f, 40.0f, GateName::RS_FF, false, {"R", "Clk", "S"},
+             {"Q", "Q`"}) {}
+void RSff::setClkTriggerState(ClkTriggerS state) { clkTrigger.clkTS = state; }
 
-void JKff::setClkTriggerState(ClkTriggerS state){ clkTrigger.clkTS = state; }
+void JKff::setClkTriggerState(ClkTriggerS state) { clkTrigger.clkTS = state; }
+ClkPulse::ClkPulse(TouchableCollection *tc, Vector2 pos)
+    : m_Gate(tc, pos, GateName::CLK_PULSE, 0, 1, false), _lastTime(GetTime()) {}
+void ClkPulse::_circuitUpdate() {
+  if (GetTime() >= _lastTime + halfPulseTime) {
+    _isOn = !_isOn;
+    _outPoints[0]->booleanState = _isOn;
+    _lastTime = GetTime();
+  }
+}
+void ClkPulse::draw() {
+
+  _boxDraw(_isOn ? GREEN : RED);
+  _pointDraw();
+}

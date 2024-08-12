@@ -26,7 +26,7 @@ enum class ErrorS {
   ITEMNOTFOUND_ERROR,
   OK,
 };
-
+const float DEFAULT_FONT_SIZE=13.0;
 class Chars {
   using CharArray = std::array<char, CHARS_MAX_SIZE>;
   // Chars are array of character,That are stack allocated,Each heap allocated
@@ -111,12 +111,12 @@ Vector2 rectCenter(Rectangle rect);
 
 void DrawRectangleGradientHRec(Rectangle rect, Color color1, Color color2);
 void DrawCircleLinesCir(Circle cir, Color color, float width);
-void drawText(std::string text, Vector2 position, float fontSize = 11.0f,
+void drawText(std::string text, Vector2 position, float fontSize = DEFAULT_FONT_SIZE,
               Color color = BLACK);
 
-void drawText(const Chars &text, Vector2 position, float fontSize = 11.0f,
+void drawText(const Chars &text, Vector2 position, float fontSize = DEFAULT_FONT_SIZE,
               Color color = BLACK);
-RectSize measureText(const Chars& text,float fontSize=11.0f,float spacing=0);
+RectSize measureText(const Chars& text,float fontSize=DEFAULT_FONT_SIZE,float spacing=0);
 template <typename T> class BoundedQueue {
 public:
   BoundedQueue(size_t max_size) : max_size(max_size) {}
@@ -134,10 +134,10 @@ private:
 };
 RectSize textSize(const Chars &text, float size);
 enum class TextPositionS;
-Vector2 textPosition(Rectangle rect, const Chars &text, float fontSize = 11,
+Vector2 textPosition(Rectangle rect, const Chars &text, float fontSize = DEFAULT_FONT_SIZE,
                      float border = 3);
 Vector2 textPosition(Rectangle rect, const Chars &text, TextPositionS textPos,
-                     float fontSize = 11, float border = 3);
+                     float fontSize = DEFAULT_FONT_SIZE, float border = 3);
 
 // Template is needed.
 template <typename T> ErrorS eraseItem(Vec<T> &collection, T item) {

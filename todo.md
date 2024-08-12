@@ -1,5 +1,3 @@
-- input should start from the middle.
-- Pressing arrow key will go down the input and select it.
-- Increase the size of those gates.
-- Adding multiple selection
-- Add a JK filp-flop
+- TouchableCollection should be removed.
+- Pointer should be used only for making complex data type.
+- How do I simulate gatePoint?

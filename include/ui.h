@@ -56,7 +56,7 @@ private:
   Chars ref_text = "";
   Color ref_text_color = GRAY;
   int cursor_position = 0;
-  float _fontSize = 11.0f;
+  float _fontSize = DEFAULT_FONT_SIZE;
   void _cursor_move_right();
   void _cursor_move_left();
   void _erase_front_char();
@@ -68,9 +68,9 @@ private:
 
 public:
   TextPositionS textPositionS=TextPositionS::left;
-  InputBar(TouchableCollection *tc, Rectangle rect, float fontSize = 11);
+  InputBar(TouchableCollection *tc, Rectangle rect, float fontSize = DEFAULT_FONT_SIZE);
   InputBar(TouchableCollection *tc, Rectangle rect, const Chars &ref_text,
-           float fontSize = 11);
+           float fontSize = DEFAULT_FONT_SIZE);
   InputBar(TouchableCollection *tc, float x, float y, float width,
            float height);
   bool TextUpdate();
@@ -86,7 +86,7 @@ public:
   TextPositionS textPos;
   Color colorL = WHITE;
   Color colorR = GRAY;
-  float fontSize = 11.0f;
+  float fontSize = DEFAULT_FONT_SIZE;
   float border = 3;
   void draw(float linewidth);
   Label(Rectangle rect, const Chars &text,
@@ -122,11 +122,11 @@ class SelectBar : public Touchable {
 public:
   Vec<Chars> options;
   SelectBar(TouchableCollection *tc, Vector2 pos, Vec<Chars> &&options,
-            float width, float height, float fontSize = 11,TextPositionS textPosS=TextPositionS::center)
+            float width, float height, float fontSize = DEFAULT_FONT_SIZE,TextPositionS textPosS=TextPositionS::center)
       : Touchable(tc), options(options), _textPosS(textPosS), _fontSize(fontSize),
         _position(pos),_rectSize(width, height) {}
   SelectBar(TouchableCollection *tc, Vector2 pos, Vec<Chars> options,
-            RectSize rectSize, float fontSize = 11,TextPositionS textPosS=TextPositionS::center)
+            RectSize rectSize, float fontSize = DEFAULT_FONT_SIZE,TextPositionS textPosS=TextPositionS::center)
       : Touchable(tc), options(std::move(options)), _textPosS(textPosS),
         _fontSize(fontSize), _position(pos),_rectSize(rectSize) {}
 
@@ -151,7 +151,7 @@ private:
 
 public:
   SearchBar(TouchableCollection *tc, Vector2 position,
-            const Vec<Chars> &options, float fontSize = 11, float width = 50,
+            const Vec<Chars> &options, float fontSize = DEFAULT_FONT_SIZE, float width = 50,
             float height = 30)
       : ib(tc, rectFromPos(position, width, height), fontSize),
         sb(tc, position + Vector2{0, height}, Vec<Chars>(options), width,

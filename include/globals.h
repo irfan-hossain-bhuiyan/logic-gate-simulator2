@@ -40,7 +40,8 @@ const Chars LIGHT = "LIGHT";
 const Chars SWITCH = "SWITCH";
 const Chars RS_FF = "RS\nFF";
 const Chars JK_FF = "JK\nFF";
-const Vec<Chars> GATES_NAME = {AND, OR, NOT, NOR, NAND, XOR, LIGHT, SWITCH,RS_FF,JK_FF};
+const Chars CLK_PULSE="Clk\nPulse";
+const Vec<Chars> GATES_NAME = {AND, OR, NOT, NOR, NAND, XOR, LIGHT, SWITCH,RS_FF,JK_FF,CLK_PULSE};
 } // namespace GateName
 
 namespace UI {
@@ -52,7 +53,7 @@ enum class UIState {
   DELETE,
 };
 // calculated first,As they handle event.
-const RectSize BAR_SIZE{50, 25};
+const RectSize BAR_SIZE{70,35};
 // namespace Options
 [[nodiscard]] UIState _nextState(UIState); // What will be the next state
                                            // of the ui given the current state

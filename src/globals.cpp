@@ -111,6 +111,8 @@ void create_gate(const Chars &gateName) {
     gate = make_unique<RSff>(&tc, mouseGlobalPos);
   } else if (gateName == JK_FF) {
     gate = make_unique<JKff>(&tc, mouseGlobalPos);
+  } else if (gateName == CLK_PULSE) {
+    gate = make_unique<ClkPulse>(&tc, mouseGlobalPos);
   } else {
     Debugger::push_message("Gate name is not addressed.");
     return;
@@ -125,7 +127,7 @@ namespace GameManager::Debugger {
 BoundedQueue<Chars> bq(10);
 Vector2 positon = Vector2{10, 10};
 int textspace = 3;
-int fontSize = 11;
+int fontSize = 13;
 void draw() {
   for (usize i = 0; i < bq.size(); i++) {
     float y_offset = float(textspace + fontSize) * float(i);

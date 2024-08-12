@@ -35,7 +35,12 @@ private:
   Vec<m_Spline *> splines;
   Vector2 _world_pos();
   Circle _cir();
-  bool _is_disconnected();
+  bool _is_disconnected();  
+  bool _checkPointCollision(Vector2 pos) override;
+  void _setRelativePos(Vector2 pos) { relativePos = pos; }
+  void _update();
+  void _onClick();
+ 
   // bool _checkPointCollision(Vector2 pos) override;
   m_GatePoint(const m_GatePoint &gp) = delete;
   m_GatePoint(const m_GatePoint &&gp) = delete;
@@ -54,11 +59,8 @@ public:
 
   // void removeSpline()
   //  requires(STATE == GPs::in);
-  bool _checkPointCollision(Vector2 pos) override;
-  void _setRelativePos(Vector2 pos) { relativePos = pos; }
-  void _update();
-  void _onClick();
-  template <GPs S> friend void attach(m_GatePoint<S> &gp, m_Spline &sp);
+  void toggleState();
+ template <GPs S> friend void attach(m_GatePoint<S> &gp, m_Spline &sp);
   template <GPs S> friend void detach(m_GatePoint<S> &gp, m_Spline &sp);
   friend m_Spline;
   friend m_Gate;
@@ -135,6 +137,15 @@ protected:
         _dynamicInput(dynamicInput), _text(text) {
     _init();
   }
+  m_Gate(TouchableCollection *tc, Vector2 pos, float width,
+         const Chars &text, usize inPointnrMin, usize outPointnrMin,
+         bool dynamicInput)
+      : Draggable(tc, pos), _inPointnrMin(inPointnrMin),
+        _outPointnr(outPointnrMin), _width(width),
+        _dynamicInput(dynamicInput), _text(text) {
+    _init();
+  }
+
   m_Gate(TouchableCollection *tc, Vector2 pos, float width, float minHeight,
          const Chars &text, bool dynamicInput,
          std::initializer_list<const Chars> inputText,
@@ -266,13 +277,14 @@ public:
 public: // Constructor
   Switch(TouchableCollection *tc, Vector2 pos,
          const Chars &text = GateName::SWITCH)
-      : m_Gate(tc, pos, text, 0, 1, false) {}
+      : m_Gate(tc, pos,60, text, 0, 1, false) {}
 };
 enum class ClkTriggerS {
   up,
   down,
 };
 struct ClkTrigger {
+
   ClkTriggerS clkTS = ClkTriggerS::down;
   bool lastClkUp = false;
   bool isTriggered(bool isClkUP);
@@ -314,3 +326,20 @@ public:
 public: // Constructor
   JKff(TouchableCollection *tc, Vector2 pos);
 };
+class ClkPulse : public m_Gate {
+private:
+
+  //  void _eventUpdate() override final;
+  void draw() override final;
+  void _updateOutput();
+  double _lastTime;
+  bool _isOn;
+public:
+//  void draw() override final;
+  float halfPulseTime=0.5;
+  void _circuitUpdate() override final;
+
+public: // Constructor
+  ClkPulse(TouchableCollection *tc, Vector2 pos);
+};
+
