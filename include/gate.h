@@ -33,25 +33,22 @@ private:
   const Chars _text = "";
   Vector2 relativePos;
   Vec<m_Spline *> splines;
-  Vector2 _world_pos();
-  Circle _cir();
-  bool _is_disconnected();  
-  bool _checkPointCollision(Vector2 pos) override;
+  Vector2 _world_pos() const;
+  Circle _cir() const;
+  bool _is_disconnected() const;
+  const Touchable* _checkPointCollision(Vector2 pos) const override;
   void _setRelativePos(Vector2 pos) { relativePos = pos; }
-  void _update();
+  void _update(const GGS &tc);
   void _onClick();
- 
-  // bool _checkPointCollision(Vector2 pos) override;
-  m_GatePoint(const m_GatePoint &gp) = delete;
-  m_GatePoint(const m_GatePoint &&gp) = delete;
 
+  // bool _checkPointCollision(Vector2 pos) override;
 public:
   bool booleanState = false; // It needed to be public.As friend doesn't work on
                              // inherited class.
   m_GatePoint(const m_Gate &gate);
   m_GatePoint(const m_Gate &gate, const Chars &text);
-  void _draw();
-  m_Spline *get_spline()
+  void _draw(const GGS &tc) const;
+  m_Spline *get_spline() const
     requires(STATE == GPs::in);
   // void addSpline(Spline *const spline);
   // void removeSpline(Spline const *spline)
@@ -60,7 +57,7 @@ public:
   // void removeSpline()
   //  requires(STATE == GPs::in);
   void toggleState();
- template <GPs S> friend void attach(m_GatePoint<S> &gp, m_Spline &sp);
+  template <GPs S> friend void attach(m_GatePoint<S> &gp, m_Spline &sp);
   template <GPs S> friend void detach(m_GatePoint<S> &gp, m_Spline &sp);
   friend m_Spline;
   friend m_Gate;
@@ -83,8 +80,6 @@ class m_Spline {
 private:
   m_IGP *_in_ptr;
   m_OGP *_out_ptr;
-  m_Spline(const m_Spline &s) = delete;
-  m_Spline(const m_Spline &&s) = delete;
 
 private:
   void _signalPass();
@@ -99,7 +94,7 @@ public:
   m_Spline(m_IGP *in_ptr, m_OGP *out_ptr);
   ~m_Spline();
 
-  void draw();
+  void draw() const;
   friend m_Gate;
   friend m_IGP;
   friend m_OGP;
@@ -115,42 +110,38 @@ class m_Gate : public Draggable {
   constexpr static float MIN_POINT_DISTANCE = 10;
 
 public:
-  virtual void draw();
+  virtual void draw(const GGS &tc) const;
   ~m_Gate();
-  void update();
+  void update(const GGS &tc);
 
 protected:
   virtual void _circuitUpdate() = 0;
-  virtual void _eventUpdate() {};
+  virtual void _eventUpdate(const GGS& tc) {};
 
-  m_Gate(TouchableCollection *tc, Vector2 pos, const Chars &text,
+  m_Gate(Vector2 pos, const Chars &text, usize inPointnrMin,
+         usize outPointnrMin, bool dynamicInput)
+      : Draggable(pos), _inPointnrMin(inPointnrMin), _outPointnr(outPointnrMin),
+        _dynamicInput(dynamicInput), _text(text) {
+    _init();
+  }
+  m_Gate(Vector2 pos, float width, float minHeight, const Chars &text,
          usize inPointnrMin, usize outPointnrMin, bool dynamicInput)
-      : Draggable(tc, pos), _inPointnrMin(inPointnrMin),
-        _outPointnr(outPointnrMin), _dynamicInput(dynamicInput), _text(text) {
+      : Draggable(pos), _inPointnrMin(inPointnrMin), _outPointnr(outPointnrMin),
+        _width(width), _minHeight(minHeight), _dynamicInput(dynamicInput),
+        _text(text) {
     _init();
   }
-  m_Gate(TouchableCollection *tc, Vector2 pos, float width, float minHeight,
-         const Chars &text, usize inPointnrMin, usize outPointnrMin,
-         bool dynamicInput)
-      : Draggable(tc, pos), _inPointnrMin(inPointnrMin),
-        _outPointnr(outPointnrMin), _width(width), _minHeight(minHeight),
-        _dynamicInput(dynamicInput), _text(text) {
-    _init();
-  }
-  m_Gate(TouchableCollection *tc, Vector2 pos, float width,
-         const Chars &text, usize inPointnrMin, usize outPointnrMin,
-         bool dynamicInput)
-      : Draggable(tc, pos), _inPointnrMin(inPointnrMin),
-        _outPointnr(outPointnrMin), _width(width),
-        _dynamicInput(dynamicInput), _text(text) {
+  m_Gate(Vector2 pos, float width, const Chars &text, usize inPointnrMin,
+         usize outPointnrMin, bool dynamicInput)
+      : Draggable(pos), _inPointnrMin(inPointnrMin), _outPointnr(outPointnrMin),
+        _width(width), _dynamicInput(dynamicInput), _text(text) {
     _init();
   }
 
-  m_Gate(TouchableCollection *tc, Vector2 pos, float width, float minHeight,
-         const Chars &text, bool dynamicInput,
-         std::initializer_list<const Chars> inputText,
+  m_Gate(Vector2 pos, float width, float minHeight, const Chars &text,
+         bool dynamicInput, std::initializer_list<const Chars> inputText,
          std::initializer_list<const Chars> outputText)
-      : Draggable(tc, pos), _inPointnrMin(inputText.size()),
+      : Draggable(pos), _inPointnrMin(inputText.size()),
         _outPointnr(outputText.size()), _width(width), _minHeight(minHeight),
         _dynamicInput(dynamicInput), _text(text) {
     _init(inputText, outputText);
@@ -162,8 +153,8 @@ protected:
 protected:
   IGPs _inPoints;
   OGPs _outPoints;
-  void _pointDraw();
-  void _boxDraw(Color color = RED);
+  void _pointDraw(const GGS &tc) const;
+  void _boxDraw(const GGS &tc, Color color = RED) const;
 
 private:
   const usize _inPointnrMin = 2;
@@ -178,14 +169,14 @@ private:
   void _refresh();
   void _resizePoint();
   void _clearPoint();
-  float _inPointDistance();
-  float _outPointDistance();
-  usize _inPointnr();
-  float _rectHeight();
-  RectSize _rectsize();
+  float _inPointDistance() const;
+  float _outPointDistance() const;
+  usize _inPointnr() const;
+  float _rectHeight() const;
+  RectSize _rectsize() const;
   void _onClick();
   IGP &_addGatePoint();
-  bool _checkPointCollision(Vector2 pos) override;
+  const Touchable* _checkPointCollision(Vector2 pos) const override;
 
   friend IGP;
   friend OGP;
@@ -193,20 +184,19 @@ private:
   template <GPs S> friend void detach(m_GatePoint<S> &gp, m_Spline &sp);
 
 protected:
-  Rect _rect();
+  Rect _rect() const;
 };
 using namespace GameManager;
 class AndGate : public m_Gate {
 public:
-  AndGate(TouchableCollection *tc, Vector2 pos,
-          const Chars &text = GateName::AND)
-      : m_Gate(tc, pos, text, 2, 1, true) {}
+  AndGate(Vector2 pos, const Chars &text = GateName::AND)
+      : m_Gate(pos, text, 2, 1, true) {}
   void _circuitUpdate() override final;
 };
 class OrGate : public m_Gate {
 public: // Constructor
-  OrGate(TouchableCollection *tc, Vector2 pos, const Chars &text = GateName::OR)
-      : m_Gate(tc, pos, text, 2, 1, true) {}
+  OrGate(Vector2 pos, const Chars &text = GateName::OR)
+      : m_Gate(pos, text, 2, 1, true) {}
 
 public: // Functions
   void _circuitUpdate() override final;
@@ -217,9 +207,8 @@ public:
   void _circuitUpdate() override final;
 
 public:
-  NotGate(TouchableCollection *tc, Vector2 pos,
-          const Chars &text = GateName::NOT)
-      : m_Gate(tc, pos, text, 1, 1, false) {}
+  NotGate(Vector2 pos, const Chars &text = GateName::NOT)
+      : m_Gate(pos, text, 1, 1, false) {}
 };
 
 class NorGate : public m_Gate {
@@ -227,57 +216,52 @@ public:
   void _circuitUpdate() override final;
 
 public:
-  NorGate(TouchableCollection *tc, Vector2 pos,
-          const Chars &text = GateName::NOR)
-      : m_Gate(tc, pos, text, 2, 1, true) {}
+  NorGate(Vector2 pos, const Chars &text = GateName::NOR)
+      : m_Gate(pos, text, 2, 1, true) {}
 };
 class NAndGate : public m_Gate {
 public:
   void _circuitUpdate() override final;
 
 public:
-  NAndGate(TouchableCollection *tc, Vector2 pos,
-           const Chars &text = GateName::NAND)
-      : m_Gate(tc, pos, text, 2, 1, true) {}
+  NAndGate(Vector2 pos, const Chars &text = GateName::NAND)
+      : m_Gate(pos, text, 2, 1, true) {}
 };
 class XorGate : public m_Gate {
 public:
   void _circuitUpdate() override final;
 
 public:
-  XorGate(TouchableCollection *tc, Vector2 pos,
-          const Chars &text = GateName::NAND)
-      : m_Gate(tc, pos, text, 2, 1, false) {}
+  XorGate(Vector2 pos, const Chars &text = GateName::NAND)
+      : m_Gate(pos, text, 2, 1, false) {}
 };
 
 // Here are the functions
 class Light : public m_Gate {
 public: // Functions
-  void draw() override final;
+  void draw(const GGS &tc) const override final;
   void _circuitUpdate() override final;
 
 public: // Constructors
-  Light(TouchableCollection *tc, Vector2 pos,
-        const Chars &text = GateName::LIGHT)
-      : m_Gate(tc, pos, text, 1, 0, false) {}
+  Light(Vector2 pos, const Chars &text = GateName::LIGHT)
+      : m_Gate(pos, text, 1, 0, false) {}
 
 private:
-  bool _isOn(); // Check if the the light is turns on or not.
+  bool _isOn()const; // Check if the the light is turns on or not.
 };
 
 class Switch : public m_Gate {
 private:
   bool _isOn;
-  void _eventUpdate() override final;
+  void _eventUpdate(const GGS& tc) override final;
 
 public:
-  void draw() override final;
+  void draw(const GGS &tc) const override final;
   void _circuitUpdate() override final;
 
 public: // Constructor
-  Switch(TouchableCollection *tc, Vector2 pos,
-         const Chars &text = GateName::SWITCH)
-      : m_Gate(tc, pos,60, text, 0, 1, false) {}
+  Switch(Vector2 pos, const Chars &text = GateName::SWITCH)
+      : m_Gate(pos, 60, text, 0, 1, false) {}
 };
 enum class ClkTriggerS {
   up,
@@ -303,12 +287,12 @@ private:
 
 public:
   ClkTriggerS clkTriggerState;
-//  void draw() override final;
+  //  void draw() override final;
   void _circuitUpdate() override final;
   void setClkTriggerState(ClkTriggerS state);
 
 public: // Constructor
-  RSff(TouchableCollection *tc, Vector2 pos);
+  RSff(Vector2 pos);
 };
 
 class JKff : public m_Gate {
@@ -319,27 +303,26 @@ private:
   void _updateOutput();
 
 public:
-//  void draw() override final;
+  //  void draw() override final;
   void _circuitUpdate() override final;
   void setClkTriggerState(ClkTriggerS state);
 
 public: // Constructor
-  JKff(TouchableCollection *tc, Vector2 pos);
+  JKff(Vector2 pos);
 };
 class ClkPulse : public m_Gate {
 private:
-
   //  void _eventUpdate() override final;
-  void draw() override final;
+  void draw(const GGS &tc) const override final;
   void _updateOutput();
   double _lastTime;
   bool _isOn;
+
 public:
-//  void draw() override final;
-  float halfPulseTime=0.5;
+  //  void draw() override final;
+  float halfPulseTime = 0.5;
   void _circuitUpdate() override final;
 
 public: // Constructor
-  ClkPulse(TouchableCollection *tc, Vector2 pos);
+  ClkPulse(Vector2 pos);
 };
-

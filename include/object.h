@@ -2,28 +2,28 @@
 #include "basic_template.h"
 #include "ui.h"
 #include <raylib.h>
-class Draggable :public Touchable {
+class Draggable : public Touchable {
 private:
-  bool is_dragging=false;
+  bool is_dragging = false;
   Vector2 mouseRelative; // Mouse relative position with the object
 
 public:
   Vector2 NodePos;
   void mouseMoveUpdate();
   virtual bool isDraggable();
-  Draggable(TouchableCollection* const tc, Vector2 nodePos)
-      : Touchable(tc), NodePos(nodePos) {}
+  Draggable(Vector2 nodePos) : NodePos(nodePos) {}
 };
 
-class DraggableBox :public Draggable {
+class DraggableBox : public Draggable {
 private:
   RectSize rectSize;
   Color color = RED;
   Chars label = "";
 
 public:
-  DraggableBox(TouchableCollection *tc, Vector2 position, RectSize rectSize={30,40}, const Chars& label = "")
-      : Draggable(tc, position), rectSize(rectSize), label(label) {}
-  bool _checkPointCollision(Vector2 position) override;
+  DraggableBox(Vector2 position, RectSize rectSize = {30, 40},
+               const Chars &label = "")
+      : Draggable(position), rectSize(rectSize), label(label) {}
+  const Touchable* _checkPointCollision(Vector2 position) const override;
   void draw();
 };

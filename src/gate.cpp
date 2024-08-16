@@ -10,13 +10,13 @@
 
 m_Spline *m_Spline::CURRENT_SPLINE = nullptr;
 std::unordered_set<m_Spline *> m_Spline::SPLINES{};
-usize m_Gate::_inPointnr() { return _inPoints.size(); }
-float m_Gate::_rectHeight() {
+usize m_Gate::_inPointnr()const { return _inPoints.size(); }
+float m_Gate::_rectHeight()const {
   auto temp = std::max(_inPointnr(), _outPointnr);
   auto pointHeight = MIN_POINT_DISTANCE * float(temp + 1);
   return std::max(pointHeight, _minHeight);
 }
-float m_Gate::_inPointDistance() {
+float m_Gate::_inPointDistance()const {
   return std::max(_minHeight / float(_inPointnr() + 1), MIN_POINT_DISTANCE);
 }
 m_Gate::~m_Gate() {
@@ -28,33 +28,33 @@ m_Gate::~m_Gate() {
     std::for_each(x->splines.begin(), x->splines.end(),
                   [](auto ptr) { delete ptr; });
 }
-RectSize m_Gate::_rectsize() { return {_width, _rectHeight()}; }
-void m_Gate::_pointDraw() {
+RectSize m_Gate::_rectsize()const { return {_width, _rectHeight()}; }
+void m_Gate::_pointDraw(const GGS &tc) const {
   for (auto &x : this->_inPoints) {
-    x->_draw();
+    x->_draw(tc);
   }
   for (auto &x : this->_outPoints) {
-    x->_draw();
+    x->_draw(tc);
   }
 }
-void m_Gate::draw() {
+void m_Gate::draw(const GGS &tc) const {
   // Drawing in point
-  _boxDraw();
-  _pointDraw();
+  _boxDraw(tc);
+  _pointDraw(tc);
 }
-void m_Gate::_boxDraw(Color color) {
+void m_Gate::_boxDraw(const GGS &tc, Color color) const {
 
   float lineWidth = 1.0f;
-  if (is_selected())
+  if (is_selected(tc))
     lineWidth = 3.0f;
-  else if (is_touching())
+  else if (is_touching(tc))
     lineWidth = 2.0f;
   Label(_rect(), _text, color).draw(lineWidth);
 }
-template <GPs T> Vector2 GatePoint<T>::_world_pos() {
+template <GPs T> Vector2 GatePoint<T>::_world_pos() const {
   return relativePos + _gate.NodePos;
 }
-template <GPs T> Circle GatePoint<T>::_cir() {
+template <GPs T> Circle GatePoint<T>::_cir() const {
   auto orginalPos = _world_pos();
   return Circle{orginalPos, RADIUS};
 }
@@ -73,12 +73,11 @@ template <GPs T> Circle GatePoint<T>::_cir() {
 // out pointer.");}
 // }
 template <GPs T>
-m_GatePoint<T>::m_GatePoint(const m_Gate &gate)
-    : Touchable(gate.get_tc()), _gate(gate) {}
+m_GatePoint<T>::m_GatePoint(const m_Gate &gate) : _gate(gate) {}
 
-template <GPs T> void GatePoint<T>::_draw() {
+template <GPs T> void GatePoint<T>::_draw(const GGS &tc) const {
   DrawCircleCir(_cir(), WHITE);
-  DrawCircleLinesCir(_cir(), BLACK, is_touching() ? OUTLINE : 1);
+  DrawCircleLinesCir(_cir(), BLACK, is_touching(tc) ? OUTLINE : 1);
   if (_text.empty())
     return;
   auto size = measureText(_text);
@@ -125,8 +124,8 @@ IGP &m_Gate::_addGatePoint() {
   return _inPoints.back();
 }
 
-template <GPs STATE> void GatePoint<STATE>::_update() {
-  if (is_clicked()) {
+template <GPs STATE> void GatePoint<STATE>::_update(const GGS &tc) {
+  if (is_clicked(tc)) {
     this->_onClick();
   }
 }
@@ -180,7 +179,7 @@ m_Spline::~m_Spline() {
   }
 }
 
-Rect m_Gate::_rect() { return rectFromPos(NodePos, _rectsize()); }
+Rect m_Gate::_rect() const { return rectFromPos(NodePos, _rectsize()); }
 
 template <GPs STATE> void attach(m_GatePoint<STATE> &gp, m_Spline &spline) {
   if constexpr (STATE == GPs::in) {
@@ -259,7 +258,7 @@ void m_Gate::_clearPoint() {
     }
   }
 }
-float m_Gate::_outPointDistance() {
+float m_Gate::_outPointDistance() const {
   return _rectHeight() / float(_outPointnr + 1);
 }
 void m_Gate::_init(std::span<const Chars> inputText,
@@ -287,19 +286,19 @@ void m_Gate::_init() {
   }
   this->_resizePoint();
 }
-void m_Gate::update() {
+void m_Gate::update(const GGS &tc) {
   using namespace GateWindow;
-  if (this->is_clicked() && isMouseState(MouseState::editing)) {
+  if (this->is_clicked(tc) && isMouseState(MouseState::editing)) {
     _onClick();
   }
-  this->_eventUpdate();
+  this->_eventUpdate(tc);
   this->_circuitUpdate();
   this->mouseMoveUpdate();
   for (auto &x : _inPoints) {
-    x->_update();
+    x->_update(tc);
   }
   for (auto &x : _outPoints) {
-    x->_update();
+    x->_update(tc);
   }
 }
 bool m_Spline::mouse_empty() { return CURRENT_SPLINE == nullptr; }
@@ -308,7 +307,7 @@ void m_Spline::SplinesDraw() {
     x->draw();
   }
 }
-void m_Spline::draw() {
+void m_Spline::draw() const {
   using namespace GameManager;
   auto in_pos = _in_ptr != nullptr
                     ? _in_ptr->_world_pos()
@@ -326,21 +325,21 @@ void m_Spline::draw() {
                       SPLINE_THICKNESS - BORDER, color);
 }
 template <GPs STATE>
-bool m_GatePoint<STATE>::_checkPointCollision(Vector2 pos) {
-  return CheckCollisionPointCircle(pos, _cir());
+const Touchable* m_GatePoint<STATE>::_checkPointCollision(Vector2 pos) const {
+  return CheckCollisionPointCircle(pos, _cir())?this:nullptr;
 }
 template <GPs STATE> void m_GatePoint<STATE>::toggleState() {
   booleanState = !booleanState;
 }
 
-template <GPs STATE> bool m_GatePoint<STATE>::_is_disconnected() {
+template <GPs STATE> bool m_GatePoint<STATE>::_is_disconnected() const {
   return splines.empty();
 }
-bool m_Gate::_checkPointCollision(Vector2 pos) {
-  return CheckCollisionPointRec(pos, _rect());
+const Touchable* m_Gate::_checkPointCollision(Vector2 pos) const {
+  return CheckCollisionPointRec(pos, _rect())?this:nullptr;
 }
 template <GPs STATE>
-m_Spline *m_GatePoint<STATE>::get_spline()
+m_Spline *m_GatePoint<STATE>::get_spline() const
   requires(STATE == GPs::in)
 {
   return this->splines.front();
@@ -373,19 +372,19 @@ void NotGate::_circuitUpdate() {
   }
   _outPoints.front()->booleanState = output;
 }
-bool Light::_isOn() { return _inPoints.front()->booleanState; }
-void Light::draw() {
-  _boxDraw(_isOn() ? GREEN : RED);
-  _pointDraw();
+bool Light::_isOn() const { return _inPoints.front()->booleanState; }
+void Light::draw(const GGS &tc) const {
+  _boxDraw(tc, _isOn() ? GREEN : RED);
+  _pointDraw(tc);
 }
-void Switch::draw() {
-  _boxDraw(_isOn ? GREEN : RED);
-  _pointDraw();
+void Switch::draw(const GGS &tc) const {
+  _boxDraw(tc, _isOn ? GREEN : RED);
+  _pointDraw(tc);
 }
 void Switch::_circuitUpdate() { _outPoints.front()->booleanState = _isOn; }
-void Switch::_eventUpdate() {
+void Switch::_eventUpdate(const GGS &tc) {
   using namespace GateWindow;
-  if (is_clicked() && isMouseState(MouseState::running)) {
+  if (is_clicked(tc) && isMouseState(MouseState::running)) {
     _isOn = !_isOn;
   }
 }
@@ -423,7 +422,7 @@ void NAndGate::_circuitUpdate() {
 }
 template <GPs STATE>
 m_GatePoint<STATE>::m_GatePoint(const m_Gate &gate, const Chars &text)
-    : Touchable(gate.get_tc()), _gate(gate), _text(text) {}
+    : _gate(gate), _text(text) {}
 void RSff::_updateOutput() {
   switch (savedState) {
   case LatchS::q:
@@ -486,18 +485,18 @@ bool ClkTrigger::isTriggered(bool isClkUP) {
   lastClkUp = isClkUP;
   return ans;
 }
-JKff::JKff(TouchableCollection *tc, Vector2 pos)
-    : m_Gate(tc, pos, 50.0f, 40.0f, GateName::JK_FF, false, {"J", "Clk", "K"},
+JKff::JKff(Vector2 pos)
+    : m_Gate(pos, 50.0f, 40.0f, GateName::JK_FF, false, {"J", "Clk", "K"},
              {"Q", "Q`"}) {}
 
-RSff::RSff(TouchableCollection *tc, Vector2 pos)
-    : m_Gate(tc, pos, 50.0f, 40.0f, GateName::RS_FF, false, {"R", "Clk", "S"},
+RSff::RSff(Vector2 pos)
+    : m_Gate(pos, 50.0f, 40.0f, GateName::RS_FF, false, {"R", "Clk", "S"},
              {"Q", "Q`"}) {}
 void RSff::setClkTriggerState(ClkTriggerS state) { clkTrigger.clkTS = state; }
 
 void JKff::setClkTriggerState(ClkTriggerS state) { clkTrigger.clkTS = state; }
-ClkPulse::ClkPulse(TouchableCollection *tc, Vector2 pos)
-    : m_Gate(tc, pos, GateName::CLK_PULSE, 0, 1, false), _lastTime(GetTime()) {}
+ClkPulse::ClkPulse(Vector2 pos)
+    : m_Gate(pos, GateName::CLK_PULSE, 0, 1, false), _lastTime(GetTime()) {}
 void ClkPulse::_circuitUpdate() {
   if (GetTime() >= _lastTime + halfPulseTime) {
     _isOn = !_isOn;
@@ -505,8 +504,8 @@ void ClkPulse::_circuitUpdate() {
     _lastTime = GetTime();
   }
 }
-void ClkPulse::draw() {
+void ClkPulse::draw(const GGS &tc) const {
 
-  _boxDraw(_isOn ? GREEN : RED);
-  _pointDraw();
+  _boxDraw(tc, _isOn ? GREEN : RED);
+  _pointDraw(tc);
 }

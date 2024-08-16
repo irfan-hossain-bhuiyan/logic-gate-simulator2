@@ -24,8 +24,8 @@ void Draggable::mouseMoveUpdate() {
     NodePos = getGlobalMousePosition(camera) + mouseRelative;
   }
 }
-bool DraggableBox::_checkPointCollision(Vector2 position) {
-  return CheckCollisionPointRec(position, rectFromPos(NodePos, rectSize));
+Touchable* DraggableBox::_checkPointCollision(Vector2 position) {
+  return CheckCollisionPointRec(position, rectFromPos(NodePos, rectSize))?(Touchable*)this:nullptr;
 }
 void DraggableBox::draw() {
   Label(rectFromPos(NodePos, rectSize), label, color)

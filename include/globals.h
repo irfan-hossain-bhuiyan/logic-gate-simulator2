@@ -16,6 +16,7 @@ enum class UsedCameraS {
   noCamera,
   gateCamera,
 };
+Vector2 getScreenToWorld(Vector2 pos,const UsedCameraS camera);
 Vector2 getGlobalMousePosition(const UsedCameraS camera);
 namespace Debugger {
 void push_message(const Chars &&text);

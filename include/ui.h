@@ -1,52 +1,9 @@
 #pragma once
 #include "basic_template.h"
-#include "globals.h"
 #include "raylib.h"
+#include "touch.h"
 #include <tuple>
-#include <unordered_set>
 #include <utility>
-class TouchableCollection;
-
-using namespace GameManager;
-class Touchable {
-public:
-  virtual bool _checkPointCollision(Vector2 pos) = 0;
-  Touchable(TouchableCollection *const tc);
-  Touchable(Touchable &) = delete;
-  Touchable(Touchable &&) = delete;
-  virtual ~Touchable();
-
-  bool is_touching();
-  bool is_selected();
-  bool is_clicking();
-  bool is_clicked();
-  void toSelected();
-  TouchableCollection *get_tc() const { return child_to; }
-
-private:
-  TouchableCollection *const child_to;
-  friend class TouchableCollection;
-};
-
-class TouchableCollection {
-  // If a object is selected or not is checked by touchable collection.
-private:
-  std::unordered_set<Touchable *> touchables;
-  Touchable *_touching = nullptr;
-  Touchable *_lastSelected = nullptr;
-  const UsedCameraS _camera;
-
-  void push_back(Touchable *touchable);
-  void erase(Touchable *touchable);
-
-public:
-  TouchableCollection(UsedCameraS camera);
-  bool isSelected();
-  bool click_update();
-  const Touchable *getSelected();
-  friend class Touchable;
-  friend class Draggable;
-};
 
 enum class TextPositionS { left, right, center };
 class InputBar : Touchable {
@@ -63,18 +20,17 @@ private:
   void _move_input();
   bool _char_input();
   std::tuple<Chars, Color> _rendered_text();
-  bool _checkPointCollision(Vector2 pos) override;
+  Touchable *_checkPointCollision(Vector2 pos) const override;
   void setPos(Vector2 pos);
 
 public:
-  TextPositionS textPositionS=TextPositionS::left;
-  InputBar(TouchableCollection *tc, Rectangle rect, float fontSize = DEFAULT_FONT_SIZE);
-  InputBar(TouchableCollection *tc, Rectangle rect, const Chars &ref_text,
+  TextPositionS textPositionS = TextPositionS::left;
+  InputBar(Rectangle rect, float fontSize = DEFAULT_FONT_SIZE);
+  InputBar(Rectangle rect, const Chars &ref_text,
            float fontSize = DEFAULT_FONT_SIZE);
-  InputBar(TouchableCollection *tc, float x, float y, float width,
-           float height);
-  bool TextUpdate();
-  void draw();
+  InputBar(float x, float y, float width, float height);
+  bool TextUpdate(const UGS &tc);
+  void draw(const UGS &tc);
   void reset();
   Chars get_text();
   friend class SearchBar;
@@ -88,7 +44,7 @@ public:
   Color colorR = GRAY;
   float fontSize = DEFAULT_FONT_SIZE;
   float border = 3;
-  void draw(float linewidth);
+  void draw(float linewidth) const;
   Label(Rectangle rect, const Chars &text,
         TextPositionS textpos = TextPositionS::center)
       : rect(rect), text(text), textPos(textpos) {}
@@ -109,40 +65,41 @@ public:
   Label label;
 
 private:
-  bool _checkPointCollision(Vector2 pos) override;
-  void draw();
+  Touchable *_checkPointCollision(Vector2 pos) const override;
+  void draw(const UGS &);
 
 public:
-  Button(TouchableCollection *tc, Label label)
-      : Touchable(tc), label(std::move(label)) {}
-  Button(TouchableCollection *tc, Rectangle rect, const Chars &text)
-      : Touchable(tc), label(rect, text) {}
+  Button(Label label) : label(std::move(label)) {}
+  Button(Rectangle rect, const Chars &text) : label(rect, text) {}
 };
 class SelectBar : public Touchable {
 public:
   Vec<Chars> options;
-  SelectBar(TouchableCollection *tc, Vector2 pos, Vec<Chars> &&options,
-            float width, float height, float fontSize = DEFAULT_FONT_SIZE,TextPositionS textPosS=TextPositionS::center)
-      : Touchable(tc), options(options), _textPosS(textPosS), _fontSize(fontSize),
-        _position(pos),_rectSize(width, height) {}
-  SelectBar(TouchableCollection *tc, Vector2 pos, Vec<Chars> options,
-            RectSize rectSize, float fontSize = DEFAULT_FONT_SIZE,TextPositionS textPosS=TextPositionS::center)
-      : Touchable(tc), options(std::move(options)), _textPosS(textPosS),
-        _fontSize(fontSize), _position(pos),_rectSize(rectSize) {}
-
+  SelectBar(Vector2 pos, Vec<Chars> &&options, float width, float height,
+            float fontSize = DEFAULT_FONT_SIZE,
+            TextPositionS textPosS = TextPositionS::center)
+      : options(options), _textPosS(textPosS), _fontSize(fontSize),
+        _position(pos), _rectSize(width, height) {}
+  SelectBar(Vector2 pos, Vec<Chars> options, RectSize rectSize,
+            float fontSize = DEFAULT_FONT_SIZE,
+            TextPositionS textPosS = TextPositionS::center)
+      : options(std::move(options)), _textPosS(textPosS), _fontSize(fontSize),
+        _position(pos), _rectSize(rectSize) {}
+public:
+  Touchable *_checkPointCollision(Vector2 pos) const override;
 private:
   const TextPositionS _textPosS;
   float _fontSize;
   Vector2 _position;
   RectSize _rectSize;
-  bool _checkPointCollision(Vector2 pos) override;
 
 public:
-  void draw();
-  Chars getClick(); // Returns an empty Chars if nothing is clicked or selected.
+  void draw(const UGS &);
+  Chars getClick(
+      const UGS &); // Returns an empty Chars if nothing is clicked or selected.
   void setPos(Vector2 pos);
 };
-class SearchBar {
+class SearchBar : public Touchable {
 private:
   InputBar ib;
   SelectBar sb;
@@ -150,18 +107,18 @@ private:
   Vec<Chars> filtered_options;
 
 public:
-  SearchBar(TouchableCollection *tc, Vector2 position,
-            const Vec<Chars> &options, float fontSize = DEFAULT_FONT_SIZE, float width = 50,
+  SearchBar(Vector2 position, const Vec<Chars> &options,
+            float fontSize = DEFAULT_FONT_SIZE, float width = 50,
             float height = 30)
-      : ib(tc, rectFromPos(position, width, height), fontSize),
-        sb(tc, position + Vector2{0, height}, Vec<Chars>(options), width,
-           height),
+      : ib(rectFromPos(position, width, height), fontSize),
+        sb(position + Vector2{0, height}, Vec<Chars>(options), width, height),
         options(options), filtered_options(options) {
-		ib.textPositionS=TextPositionS::center;
-	}
-  void CharUpdate();
-  Chars getClick();
-  void draw();
+    ib.textPositionS = TextPositionS::center;
+  }
+  void CharUpdate(const UGS &);
+  Chars getClick(const UGS &);
+  void draw(const UGS &);
   void setPos(Vector2 pos);
-  void toSelected();
+  void toSelected(UGS &);
+  Touchable *_checkPointCollision(Vector2 pos)const override ;
 };
