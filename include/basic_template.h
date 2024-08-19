@@ -9,6 +9,7 @@
 #include <raymath.h>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <utility>
 using i32 = int;
 using i64 = long long;
@@ -216,3 +217,19 @@ std::vector<T> vectorNemement(usize n, const std::function<T()> &func) {
 }
 
 std::ostream &operator<<(std::ostream &os, const Vector2 &vec2);
+
+template <typename T> class unorderedVec {
+private:
+  std::unordered_map<int, T> core;
+
+public:
+  int pushBack(T &&object) {
+    int id;
+    while (core.count(id) == 0) {
+      id = rand();
+    }
+    core[id] = object;
+    return id;
+  }
+  T &get(int id) { return core[id]; }
+};
