@@ -20,7 +20,6 @@ private:
   void _move_input();
   bool _char_input();
   std::tuple<Chars, Color> _rendered_text();
-  Touchable *_checkPointCollision(Vector2 pos) const override;
   void setPos(Vector2 pos);
 
 public:
@@ -33,6 +32,7 @@ public:
   void draw(const UGS &tc);
   void reset();
   Chars get_text();
+  const Touchable *checkPointCollision(Vector2 pos) const override;
   friend class SearchBar;
 };
 class Label {
@@ -64,8 +64,8 @@ class Button : public Touchable {
 public:
   Label label;
 
+  const Touchable *checkPointCollision(Vector2 pos) const override;
 private:
-  Touchable *_checkPointCollision(Vector2 pos) const override;
   void draw(const UGS &);
 
 public:
@@ -85,8 +85,10 @@ public:
             TextPositionS textPosS = TextPositionS::center)
       : options(std::move(options)), _textPosS(textPosS), _fontSize(fontSize),
         _position(pos), _rectSize(rectSize) {}
+
 public:
-  Touchable *_checkPointCollision(Vector2 pos) const override;
+  const Touchable *checkPointCollision(Vector2 pos) const override;
+
 private:
   const TextPositionS _textPosS;
   float _fontSize;
@@ -94,9 +96,9 @@ private:
   RectSize _rectSize;
 
 public:
-  void draw(const UGS &);
-  Chars getClick(
-      const UGS &); // Returns an empty Chars if nothing is clicked or selected.
+  void draw(const UGS &) const;
+  Chars getClick(const UGS &) const; // Returns an empty Chars
+                                     // if nothing is clicked or selected.
   void setPos(Vector2 pos);
 };
 class SearchBar : public Touchable {
@@ -120,5 +122,5 @@ public:
   void draw(const UGS &);
   void setPos(Vector2 pos);
   void toSelected(UGS &);
-  Touchable *_checkPointCollision(Vector2 pos)const override ;
+  const Touchable *checkPointCollision(Vector2 pos) const override;
 };

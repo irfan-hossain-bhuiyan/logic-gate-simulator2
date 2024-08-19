@@ -3,6 +3,7 @@
 #include "globals.h"
 #include "raylib.h"
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <tuple>
 // Touchable::~Touchable() {
@@ -80,7 +81,7 @@ std::tuple<Chars, Color> InputBar::_rendered_text() {
   text.insert('|', cursor_position);
   return std::tuple(text, BLACK);
 }
-Touchable *InputBar::_checkPointCollision(Vector2 pos) const {
+const Touchable *InputBar::checkPointCollision(Vector2 pos) const {
   return CheckCollisionPointRec(pos, rect) ? (Touchable *)this : nullptr;
 }
 
@@ -117,20 +118,20 @@ void Label::draw(float linewidth) const {
   Vector2 _textPos = textPosition(rect, text, textPos);
   drawText(text, _textPos, fontSize, BLACK);
 }
-Touchable *Button::_checkPointCollision(Vector2 pos) const {
+const Touchable *Button::checkPointCollision(Vector2 pos) const {
   return CheckCollisionPointRec(pos, label.rect) ? (Touchable *)this : nullptr;
 }
 void Button::draw(const UGS &tc) { label.draw(is_touching(tc) ? 2.0 : 1.0); }
 
-Touchable *SelectBar::_checkPointCollision(Vector2 pos) const {
+const Touchable *SelectBar::checkPointCollision(Vector2 pos) const {
   Rectangle colrec = Rectangle{_position.x, _position.y, _rectSize.width,
                                _rectSize.height * float(options.size())};
   return CheckCollisionPointRec(pos, colrec) ? (Touchable *)this : nullptr;
 }
-void SelectBar::draw(const UGS &tc) {
+void SelectBar::draw(const UGS &tc) const {
   auto highlighted = options.size();
   if (is_touching(tc)) {
-    highlighted = (float(GetMouseY()) - _position.y) / _rectSize.height);
+    highlighted = (float(GetMouseY()) - _position.y) / _rectSize.height;
   }
   for (usize i = 0; i < options.size(); i++) {
     Rectangle button_rect =
@@ -140,10 +141,10 @@ void SelectBar::draw(const UGS &tc) {
     btn.draw(i == highlighted ? 3.0 : 1.0);
   }
 }
-Chars SelectBar::getClick(const UGS &tc) {
+Chars SelectBar::getClick(const UGS &tc) const {
   if (is_clicked(tc)) {
     int highlighted =
-        int((float(GetMouseY()) - _position.y) / _rectSize.height);
+        (float(GetMouseY()) - _position.y) / _rectSize.height;
 
     return options[highlighted];
   }
@@ -174,10 +175,10 @@ void SearchBar::setPos(Vector2 pos) {
 }
 // void Touchable::toSelected() { child_to->_lastSelected = this; }
 void SearchBar::toSelected(UGS &tc) { tc.toSelect(this->ib); }
-Touchable *SearchBar::_checkPointCollision(Vector2 pos) const {
-  if (Touchable *collided = ib._checkPointCollision(pos))
+const Touchable *SearchBar::checkPointCollision(Vector2 pos) const {
+  if (const Touchable *collided = sb.checkPointCollision(pos))
     return collided;
-  if (Touchable *collided = sb._checkPointCollision(pos))
+  if (const Touchable *collided = ib.checkPointCollision(pos))
     return collided;
   return nullptr;
 }

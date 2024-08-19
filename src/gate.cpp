@@ -10,13 +10,13 @@
 
 m_Spline *m_Spline::CURRENT_SPLINE = nullptr;
 std::unordered_set<m_Spline *> m_Spline::SPLINES{};
-usize m_Gate::_inPointnr()const { return _inPoints.size(); }
-float m_Gate::_rectHeight()const {
+usize m_Gate::_inPointnr() const { return _inPoints.size(); }
+float m_Gate::_rectHeight() const {
   auto temp = std::max(_inPointnr(), _outPointnr);
   auto pointHeight = MIN_POINT_DISTANCE * float(temp + 1);
   return std::max(pointHeight, _minHeight);
 }
-float m_Gate::_inPointDistance()const {
+float m_Gate::_inPointDistance() const {
   return std::max(_minHeight / float(_inPointnr() + 1), MIN_POINT_DISTANCE);
 }
 m_Gate::~m_Gate() {
@@ -28,7 +28,7 @@ m_Gate::~m_Gate() {
     std::for_each(x->splines.begin(), x->splines.end(),
                   [](auto ptr) { delete ptr; });
 }
-RectSize m_Gate::_rectsize()const { return {_width, _rectHeight()}; }
+RectSize m_Gate::_rectsize() const { return {_width, _rectHeight()}; }
 void m_Gate::_pointDraw(const GGS &tc) const {
   for (auto &x : this->_inPoints) {
     x->_draw(tc);
@@ -49,7 +49,7 @@ void m_Gate::_boxDraw(const GGS &tc, Color color) const {
     lineWidth = 3.0f;
   else if (is_touching(tc))
     lineWidth = 2.0f;
-  Label(_rect(), _text, color).draw(lineWidth);
+  Label(_rect(), gateName, color).draw(lineWidth);
 }
 template <GPs T> Vector2 GatePoint<T>::_world_pos() const {
   return relativePos + _gate.NodePos;
@@ -167,7 +167,7 @@ m_Spline::m_Spline(m_IGP *in_ptr, m_OGP *out_ptr)
 m_Spline::~m_Spline() {
   auto it = SPLINES.find(this);
   if (it == SPLINES.end()) {
-    GameManager::Debugger::push_message("SPLINES isn't in spline");
+    GameManager::Debugger::messages << "SPLINES isn't in spline" << "\n";
     return;
   }
   SPLINES.erase(it);
@@ -200,15 +200,15 @@ template <GPs STATE> void detach(m_GatePoint<STATE> &gp, m_Spline &spline) {
   using namespace GameManager;
   if constexpr (STATE == GPs::in) {
     if (gp.splines.empty()) {
-      Debugger::push_message("The inpoint vector is empty.");
+      Debugger::messages << "The inpoint vector is empty." << "\n";
       return;
     }
     if (gp.splines.front() != &spline) {
-      Debugger::push_message("In point is not contain the spline.");
+      Debugger::messages << "In point is not contain the spline." << "\n";
       return;
     }
     if (spline._in_ptr != &gp) {
-      Debugger::push_message("Spline not contain the gp");
+      Debugger::messages << "Spline not contain the gp" << "\n";
       return;
     }
     gp.splines.clear();
@@ -216,10 +216,10 @@ template <GPs STATE> void detach(m_GatePoint<STATE> &gp, m_Spline &spline) {
   } else if constexpr (STATE == GPs::out) {
     ErrorS err = eraseItem(gp.splines, &spline);
     if (err != ErrorS::OK) {
-      Debugger::push_message("The Gatepoint don't contain spline");
+      Debugger::messages << "The Gatepoint don't contain spline" << "\n";
     }
     if (spline._out_ptr != &gp) {
-      Debugger::push_message("The Spline don't contain Gatepoint");
+      Debugger::messages << "The Spline don't contain Gatepoint" << "\n";
     }
     spline._out_ptr = nullptr;
   }
@@ -293,7 +293,7 @@ void m_Gate::update(const GGS &tc) {
   }
   this->_eventUpdate(tc);
   this->_circuitUpdate();
-  this->mouseMoveUpdate();
+  this->mouseMoveUpdate(tc);
   for (auto &x : _inPoints) {
     x->_update(tc);
   }
@@ -325,8 +325,8 @@ void m_Spline::draw() const {
                       SPLINE_THICKNESS - BORDER, color);
 }
 template <GPs STATE>
-const Touchable* m_GatePoint<STATE>::_checkPointCollision(Vector2 pos) const {
-  return CheckCollisionPointCircle(pos, _cir())?this:nullptr;
+const Touchable *m_GatePoint<STATE>::checkPointCollision(Vector2 pos) const {
+  return CheckCollisionPointCircle(pos, _cir()) ? this : nullptr;
 }
 template <GPs STATE> void m_GatePoint<STATE>::toggleState() {
   booleanState = !booleanState;
@@ -335,8 +335,16 @@ template <GPs STATE> void m_GatePoint<STATE>::toggleState() {
 template <GPs STATE> bool m_GatePoint<STATE>::_is_disconnected() const {
   return splines.empty();
 }
-const Touchable* m_Gate::_checkPointCollision(Vector2 pos) const {
-  return CheckCollisionPointRec(pos, _rect())?this:nullptr;
+const Touchable *m_Gate::checkPointCollision(Vector2 pos) const {
+  for (auto &x : _inPoints)
+    if (const Touchable *t = x->checkPointCollision(pos))
+      return t;
+  for (auto &x : _outPoints)
+    if (const Touchable *t = x->checkPointCollision(pos))
+      return t;
+  if (CheckCollisionPointRec(pos, _rect()))
+    return this;
+  return nullptr;
 }
 template <GPs STATE>
 m_Spline *m_GatePoint<STATE>::get_spline() const
@@ -414,7 +422,7 @@ void XorGate::_circuitUpdate() {
   _outPoints.front()->booleanState = output;
 }
 void NAndGate::_circuitUpdate() {
-  bool output = false;
+  bool output = true;
   for (const auto &x : _inPoints) {
     output &= x->booleanState;
   }
@@ -505,7 +513,57 @@ void ClkPulse::_circuitUpdate() {
   }
 }
 void ClkPulse::draw(const GGS &tc) const {
-
   _boxDraw(tc, _isOn ? GREEN : RED);
   _pointDraw(tc);
 }
+m_Gate::m_Gate(Vector2 pos, const Chars &text, usize inPointnrMin,
+               usize outPointnrMin, bool dynamicInput)
+    : Draggable(pos), _inPointnrMin(inPointnrMin), _outPointnr(outPointnrMin),
+      _dynamicInput(dynamicInput), gateName(text) {
+  _init();
+}
+m_Gate::m_Gate(Vector2 pos, float width, float minHeight, const Chars &text,
+               usize inPointnrMin, usize outPointnrMin, bool dynamicInput)
+    : Draggable(pos), _inPointnrMin(inPointnrMin), _outPointnr(outPointnrMin),
+      _width(width), _minHeight(minHeight), _dynamicInput(dynamicInput),
+      gateName(text) {
+  _init();
+}
+m_Gate::m_Gate(Vector2 pos, float width, const Chars &text, usize inPointnrMin,
+               usize outPointnrMin, bool dynamicInput)
+    : Draggable(pos), _inPointnrMin(inPointnrMin), _outPointnr(outPointnrMin),
+      _width(width), _dynamicInput(dynamicInput), gateName(text) {
+  _init();
+}
+m_Gate::m_Gate(Vector2 pos, float width, float minHeight, const Chars &text,
+               bool dynamicInput, std::initializer_list<const Chars> inputText,
+               std::initializer_list<const Chars> outputText)
+    : Draggable(pos), _inPointnrMin(inputText.size()),
+      _outPointnr(outputText.size()), _width(width), _minHeight(minHeight),
+      _dynamicInput(dynamicInput), gateName(text) {
+  _init(inputText, outputText);
+}
+AndGate::AndGate(Vector2 pos)
+    : m_Gate(pos, GateName::AND, 2, 1, true) {}
+OrGate::OrGate(Vector2 pos)
+    : m_Gate(pos, GateName::OR, 2, 1, true) {}
+
+NotGate::NotGate(Vector2 pos)
+      : m_Gate(pos, GateName::NOT, 1, 1, false){}
+
+NorGate::NorGate(Vector2 pos)
+      : m_Gate(pos, GateName::NOR, 2, 1, true) {}
+
+
+NAndGate::NAndGate(Vector2 pos)
+      : m_Gate(pos, GateName::NAND, 2, 1, true) {}
+XorGate::XorGate(Vector2 pos)
+      : m_Gate(pos, GateName::XOR, 2, 1, false) {}
+
+
+Light::Light(Vector2 pos)
+      : m_Gate(pos, 50, GateName::LIGHT, 1, 0, false) {}
+
+
+Switch::Switch(Vector2 pos)
+      : m_Gate(pos, 60, GateName::SWITCH, 0, 1, false) {}

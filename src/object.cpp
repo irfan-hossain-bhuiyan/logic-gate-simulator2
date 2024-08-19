@@ -7,13 +7,13 @@ bool Draggable::isDraggable() {
   using GameManager::GateWindow::isMouseState;
   return isMouseState(GameManager::GateWindow::MouseState::editing);
 }
-void Draggable::mouseMoveUpdate() {
-  UsedCameraS camera = get_tc()->_camera;
+void Draggable::mouseMoveUpdate(const GS & gs) {
+  using GameManager::UsedCameraS;
   { // Updating is_dragging and mouse_relative field feild
-    if (is_clicked() && isDraggable()) {
+    if (is_clicked(gs) && isDraggable()) {
       if (!is_dragging) {
         is_dragging = true;
-        mouseRelative = NodePos - getGlobalMousePosition(camera);
+        mouseRelative = NodePos - gs.getGlobalMousePosition();
       }
     }
     if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
@@ -21,13 +21,15 @@ void Draggable::mouseMoveUpdate() {
     }
   }
   if (is_dragging) {
-    NodePos = getGlobalMousePosition(camera) + mouseRelative;
+    NodePos = gs.getGlobalMousePosition() + mouseRelative;
   }
 }
-Touchable* DraggableBox::_checkPointCollision(Vector2 position) {
-  return CheckCollisionPointRec(position, rectFromPos(NodePos, rectSize))?(Touchable*)this:nullptr;
+const Touchable *DraggableBox::checkPointCollision(Vector2 position)const {
+  return CheckCollisionPointRec(position, rectFromPos(NodePos, rectSize))
+             ? (Touchable *)this
+             : nullptr;
 }
-void DraggableBox::draw() {
+void DraggableBox::draw(const GS& gs)const {
   Label(rectFromPos(NodePos, rectSize), label, color)
-      .draw(is_clicking() ? 3 : 1);
+      .draw(is_clicking(gs) ? 3 : 1);
 }

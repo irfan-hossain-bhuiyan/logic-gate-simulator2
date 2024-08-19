@@ -9,7 +9,7 @@ private:
 
 public:
   Vector2 NodePos;
-  void mouseMoveUpdate();
+  void mouseMoveUpdate(const GS&);
   virtual bool isDraggable();
   Draggable(Vector2 nodePos) : NodePos(nodePos) {}
 };
@@ -24,6 +24,6 @@ public:
   DraggableBox(Vector2 position, RectSize rectSize = {30, 40},
                const Chars &label = "")
       : Draggable(position), rectSize(rectSize), label(label) {}
-  const Touchable* _checkPointCollision(Vector2 position) const override;
-  void draw();
+  const Touchable* checkPointCollision(Vector2 position) const override;
+  void draw(const GS& gs)const;
 };

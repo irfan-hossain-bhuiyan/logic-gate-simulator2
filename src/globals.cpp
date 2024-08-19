@@ -2,7 +2,6 @@
 #include "basic_template.h"
 #include "gate.h"
 #include "ui.h"
-#include <algorithm>
 #include <memory>
 #include <raylib.h>
 #include <raymath.h>
@@ -21,16 +20,18 @@ void _initGateCamera() {
       .offset = middle, .target = {0, 0}, .rotation = 0.0f, .zoom = 1.0f};
 }
 void _deleteGate() {
-  if (GateWindow::ggs.hasSelected()) {
-    auto it = std::find_if(gates.begin(), gates.end(), [](const auto &x) {
-      return GateWindow::ggs.isSelected(*x.get());
-    });
-    if (it == gates.end()) {
-      Debugger::push_message("The gates vec doesn;t have the object.");
-      return;
+  for (auto it = gates.begin(); it != gates.end();) {
+    auto &x = *it;
+    if (GateWindow::ggs.isSelected(*x.get())) {
+      ggs.removeSelection(*x.get());
+      it = gates.erase(it);
+    } else {
+      it++;
     }
-    gates.erase(it);
+    if (GateWindow::ggs.hasSelected() == false)
+      return;
   }
+  Debugger::messages << "Not all elements can be deleted." << end;
 }
 
 Camera2D getCamera() { return camera2d; }
@@ -70,18 +71,19 @@ void _cameraMove() {
     Vector2 distance = camera2d.offset - GetMousePosition();
     camera2d.offset += distance * zoomIncrease / camera2d.zoom;
     camera2d.zoom += (0.1f * roll);
-    Debugger::push_message(std::to_string(camera2d.zoom));
   }
   camera2d.zoom = Clamp(camera2d.zoom, 0.1, 4);
   camera2d.target += Vector2Normalize(arrowDirection) / camera2d.zoom;
 }
-void update() {
-  _arrowUpdate();
-  _cameraMove();
+void objectUpdate() {
+  _arrowUpdate(); // Arrow used to move around in the gate Window.
+  _cameraMove();  // Moving camera using the arrow.
   if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
     m_Spline::removeCurrentSpline();
-  for (auto &x : gates)
+  for (auto &x : gates) {
     x->update(GateWindow::ggs); // Updating all gates.
+    // Debugger::messages << x->NodePos << end;
+  }
   m_Spline::signalPasses();
 }
 void create_gate(const Chars &gateName) {
@@ -112,31 +114,37 @@ void create_gate(const Chars &gateName) {
   } else if (gateName == CLK_PULSE) {
     gate = make_unique<ClkPulse>(mouseGlobalPos);
   } else {
-    Debugger::push_message("Gate name is not addressed.");
+    // Debugger::messages << "Gate name is not addressed." <<end;
     return;
   }
   gates.push_back(std::move(gate));
 }
+const Touchable *_clickUpdate() {
+  for (auto x = gates.rbegin(); x != gates.rend(); x++) {
+    const Touchable *clicked = ggs.touchUpdate(**x);
+    if (clicked != nullptr) {
+      return clicked;
+    }
+  }
+  return nullptr;
+}
 
-// Usage:
 } // namespace GameManager::GateWindow
   //
 namespace GameManager::Debugger {
-BoundedQueue<Chars> bq(10);
 Vector2 positon = Vector2{10, 10};
-int textspace = 3;
-int fontSize = 13;
+float textspace = 5;
+float fontSize = 19;
 void draw() {
-  for (usize i = 0; i < bq.size(); i++) {
+  for (usize i = 0; i < messages.size(); i++) {
     float y_offset = float(textspace + fontSize) * float(i);
     auto pos = positon + Vector2{0, y_offset};
-    drawText(bq.at(i), pos);
+    drawText(messages.at(i), pos, fontSize, RED);
   }
 }
-void push_message(const Chars &&text) { bq.push(text); }
-void push_message(const Chars &text) { bq.push(text); }
 } // namespace GameManager::Debugger
   //
+StringQueue GameManager::Debugger::messages(10);
 namespace GameManager::UI {
 
 UIState currentState = UIState::NOTIHING;
@@ -231,6 +239,23 @@ void _stateInit(UIState currentState) {
     break;
   }
 }
+const Touchable *_clickUpdate() {
+  switch (currentState) {
+  case UIState::NOTIHING:
+    break;
+  case UIState::MAIN_MENU:
+    return ugs.touchUpdate(_selectBar);
+    break;
+  case UIState::CREATE_MENU:
+    return ugs.touchUpdate(_searchBar);
+  case UIState::MOUSE_CHANGE:
+    break;
+  case UIState::DELETE:
+    break;
+  }
+  return nullptr;
+}
+
 void draw() {
   switch (currentState) {
   case UIState::NOTIHING:
@@ -246,15 +271,15 @@ void draw() {
     break;
   }
 }
-void update() {
-  _stateUpdate();
+
+void _objectUpdate() {
   switch (currentState) {
   case UIState::NOTIHING: // Created this for exhaustic match.Like in rust.
     break;
   case UIState::MAIN_MENU:
     break;
   case UIState::CREATE_MENU:
-    _searchBar.CharUpdate(ugs);
+    _searchBar.CharUpdate(ugs); // SelectBar doesn't have update
     break;
   case UIState::MOUSE_CHANGE:
     break;
@@ -262,15 +287,32 @@ void update() {
     break;
   }
 }
+void objectUpdate() {
+  _stateUpdate();
+  _objectUpdate();
+}
 } // namespace GameManager::UI
 namespace GameManager {
+using GateWindow::gates;
+using UI::ui;
+void clickUpdate() {
+#pragma region uiClickUpdate
+  {
+    bool uiTouched = UI::_clickUpdate() != nullptr;
+    UI::ugs.afterTouchUpdate();
+    if (uiTouched)
+      return;
+  }
+#pragma endregion
 
-void tcUpdate() {
-  auto uiSlice = std::span(UI::ui);
-  if (UI::ugs.clickUpdate(uiSlice))
-    return;
-  if (GateWindow::ggs.clickUpdate())
-    return;
+#pragma region gateClickUpdate
+  {
+    bool gateTouched = GateWindow::_clickUpdate() != nullptr;
+    GateWindow::ggs.afterTouchUpdate();
+    if (gateTouched)
+      return;
+  }
+#pragma endregion
 }
 Vector2 getScreenToWorld(Vector2 pos, const UsedCameraS camera) {
   switch (camera) {
@@ -280,7 +322,10 @@ Vector2 getScreenToWorld(Vector2 pos, const UsedCameraS camera) {
     return GetScreenToWorld2D(pos, GateWindow::camera2d);
   }
 }
-
+void _gsInit() {
+  UI::ugs.frameInit();
+  GateWindow::ggs.frameInit();
+}
 Vector2 getGlobalMousePosition(const UsedCameraS camera) {
   return getScreenToWorld(GetMousePosition(), camera);
 }
@@ -289,9 +334,17 @@ void init() {
   GateWindow::_initGateCamera();
   Resource::_init();
 }
+void update() {
+  GameManager::_gsInit();
+  GameManager::clickUpdate();
+  UI::objectUpdate();
+  GateWindow::objectUpdate();
+}
+
 } // namespace GameManager
 void Resource::_init() {
   Fonts::LUMITIVE_FONT = LoadFont("./Resources/fonts/luminova_bold.otf");
+  // Fonts::LUMITIVE_FONT=GetFontDefault();
 }
 
 // extern initilize

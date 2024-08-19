@@ -10,14 +10,13 @@ int main() {
   using namespace GameManager;
   init();
   while (!WindowShouldClose()) {
-    GameManager::tcUpdate();
-    UI::update();
-    GateWindow::update();
+    GameManager::update();
     BeginDrawing();
     ClearBackground(RAYWHITE);
     BeginMode2D(GateWindow::getCamera());
     GateWindow::draw();
     EndMode2D();
+    //Debugger::messages<<"M:"<<GetMousePosition()<<end;
     UI::draw();
     Debugger::draw();
     EndDrawing();

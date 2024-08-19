@@ -1,7 +1,5 @@
 #include "touch.h"
 #include "globals.h"
-#include <algorithm>
-#include <initializer_list>
 #include <raylib.h>
 bool Touchable::is_touching(const GS &tc) const { return tc.isTouching(*this); }
 bool Touchable::is_selected(const GS &tc) const { return tc.isSelected(*this); }
@@ -24,19 +22,73 @@ bool UIGlobalState::isTouching(const Touchable &t) const {
   return _touching == &t;
 }
 
+Vector2 UIGlobalState::screenToWorldPos(Vector2 pos) const { return pos; }
+void UIGlobalState::toSelect(Touchable const &obj) { _lastSelected = &obj; }
+
+Vector2 GS::getGlobalMousePosition() const {
+  return screenToWorldPos(GetMousePosition());
+}
+void UIGlobalState::frameInit() { _touching = nullptr; }
+void GateGlobalState::frameInit() { _touching = nullptr; }
+const Touchable *UIGlobalState::touchUpdate(const Touchable &tc) {
+  if (_touching != nullptr)
+    return _touching; // The mouse is already touching other object.
+  _touching = tc.checkPointCollision(GetMousePosition());
+  return _touching;
+}
+void UIGlobalState::afterTouchUpdate() {
+  if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+    _lastSelected = _touching;
+}
+const Touchable *GateGlobalState::touchUpdate(const Touchable &tc) {
+  if (_touching != nullptr)
+    return _touching;
+  _touching = tc.checkPointCollision(getGlobalMousePosition());
+  return _touching;
+}
+Vector2 GateGlobalState::screenToWorldPos(Vector2 pos) const {
+  return GameManager::getScreenToWorld(pos,
+                                       GameManager::UsedCameraS::gateCamera);
+}
+
 bool GateGlobalState::hasSelected() const { return !_lastSelected.empty(); }
 bool GateGlobalState::isSelected(const Touchable &t) const {
-  return std::find(_lastSelected.begin(), _lastSelected.end(), &t) !=
-         _lastSelected.end();
+  return _lastSelected.find(&t) != _lastSelected.end();
+  // std::find(_lastSelected.begin(), _lastSelected.end(), &t)
+  // !=_lastSelected.end();
 }
 bool GateGlobalState::isTouching(const Touchable &t) const {
   return _touching == &t;
 }
 
-
-Vector2 UIGlobalState::screenToWorldPos(Vector2 pos) const { return pos; }
-Vector2 GateGlobalState::screenToWorldPos(Vector2 pos) const {
-  return GameManager::getScreenToWorld(pos,
-                                       GameManager::UsedCameraS::gateCamera);
+void GateGlobalState::_toggleSelection() {
+  if (isSelected(*_touching)) {
+    removeSelection(*_touching);
+  } else {
+    _toSelected(*_touching);
+  }
 }
-void UIGlobalState::toSelect(Touchable const &obj) { _lastSelected = &obj; }
+void GateGlobalState::removeSelection(const Touchable &tc) {
+  _lastSelected.erase(&tc);
+}
+void GateGlobalState::_toSelected(const Touchable &tc) {
+  _lastSelected.insert(&tc);
+}
+void GateGlobalState::_clearSelection() { _lastSelected.clear(); }
+void GateGlobalState::afterTouchUpdate() {
+  if (!IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+    return;
+  bool shiftPressed = IsKeyDown(KEY_LEFT_SHIFT);
+  bool touching = _touching != nullptr;
+  if (shiftPressed == false && touching == false)
+    _clearSelection();
+  else if (shiftPressed == false && touching == true) {
+    if (isSelected(*_touching))
+      return;
+    _clearSelection();
+    _toSelected(*_touching);
+  } else if (shiftPressed == true && touching == true)
+    _toggleSelection();
+
+  return;
+}

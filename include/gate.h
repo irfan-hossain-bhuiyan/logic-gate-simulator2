@@ -36,7 +36,7 @@ private:
   Vector2 _world_pos() const;
   Circle _cir() const;
   bool _is_disconnected() const;
-  const Touchable* _checkPointCollision(Vector2 pos) const override;
+  const Touchable *checkPointCollision(Vector2 pos) const override;
   void _setRelativePos(Vector2 pos) { relativePos = pos; }
   void _update(const GGS &tc);
   void _onClick();
@@ -110,42 +110,25 @@ class m_Gate : public Draggable {
   constexpr static float MIN_POINT_DISTANCE = 10;
 
 public:
+  const Chars gateName;
   virtual void draw(const GGS &tc) const;
   ~m_Gate();
   void update(const GGS &tc);
+  const Touchable *checkPointCollision(Vector2 pos) const override;
 
 protected:
   virtual void _circuitUpdate() = 0;
-  virtual void _eventUpdate(const GGS& tc) {};
+  virtual void _eventUpdate(const GGS &tc) {};
 
   m_Gate(Vector2 pos, const Chars &text, usize inPointnrMin,
-         usize outPointnrMin, bool dynamicInput)
-      : Draggable(pos), _inPointnrMin(inPointnrMin), _outPointnr(outPointnrMin),
-        _dynamicInput(dynamicInput), _text(text) {
-    _init();
-  }
+         usize outPointnrMin, bool dynamicInput);
   m_Gate(Vector2 pos, float width, float minHeight, const Chars &text,
-         usize inPointnrMin, usize outPointnrMin, bool dynamicInput)
-      : Draggable(pos), _inPointnrMin(inPointnrMin), _outPointnr(outPointnrMin),
-        _width(width), _minHeight(minHeight), _dynamicInput(dynamicInput),
-        _text(text) {
-    _init();
-  }
+         usize inPointnrMin, usize outPointnrMin, bool dynamicInput);
   m_Gate(Vector2 pos, float width, const Chars &text, usize inPointnrMin,
-         usize outPointnrMin, bool dynamicInput)
-      : Draggable(pos), _inPointnrMin(inPointnrMin), _outPointnr(outPointnrMin),
-        _width(width), _dynamicInput(dynamicInput), _text(text) {
-    _init();
-  }
-
+         usize outPointnrMin, bool dynamicInput);
   m_Gate(Vector2 pos, float width, float minHeight, const Chars &text,
          bool dynamicInput, std::initializer_list<const Chars> inputText,
-         std::initializer_list<const Chars> outputText)
-      : Draggable(pos), _inPointnrMin(inputText.size()),
-        _outPointnr(outputText.size()), _width(width), _minHeight(minHeight),
-        _dynamicInput(dynamicInput), _text(text) {
-    _init(inputText, outputText);
-  }
+         std::initializer_list<const Chars> outputText);
 
   // m_Gate(const m_Gate &mg) = delete;
   // m_Gate(const m_Gate &&mg) = delete;
@@ -162,7 +145,6 @@ private:
   const float _width = 30;
   const float _minHeight = 40;
   const bool _dynamicInput = false;
-  Chars _text = "";
   void _init();
   void _init(std::span<const Chars> inputText,
              std::span<const Chars> outputText);
@@ -176,7 +158,6 @@ private:
   RectSize _rectsize() const;
   void _onClick();
   IGP &_addGatePoint();
-  const Touchable* _checkPointCollision(Vector2 pos) const override;
 
   friend IGP;
   friend OGP;
@@ -189,14 +170,12 @@ protected:
 using namespace GameManager;
 class AndGate : public m_Gate {
 public:
-  AndGate(Vector2 pos, const Chars &text = GateName::AND)
-      : m_Gate(pos, text, 2, 1, true) {}
+  AndGate(Vector2 pos);
   void _circuitUpdate() override final;
 };
 class OrGate : public m_Gate {
 public: // Constructor
-  OrGate(Vector2 pos, const Chars &text = GateName::OR)
-      : m_Gate(pos, text, 2, 1, true) {}
+  OrGate(Vector2 pos);
 
 public: // Functions
   void _circuitUpdate() override final;
@@ -207,8 +186,7 @@ public:
   void _circuitUpdate() override final;
 
 public:
-  NotGate(Vector2 pos, const Chars &text = GateName::NOT)
-      : m_Gate(pos, text, 1, 1, false) {}
+  NotGate(Vector2 pos);
 };
 
 class NorGate : public m_Gate {
@@ -216,24 +194,21 @@ public:
   void _circuitUpdate() override final;
 
 public:
-  NorGate(Vector2 pos, const Chars &text = GateName::NOR)
-      : m_Gate(pos, text, 2, 1, true) {}
+  NorGate(Vector2 pos);
 };
 class NAndGate : public m_Gate {
 public:
   void _circuitUpdate() override final;
 
 public:
-  NAndGate(Vector2 pos, const Chars &text = GateName::NAND)
-      : m_Gate(pos, text, 2, 1, true) {}
+  NAndGate(Vector2 pos);
 };
 class XorGate : public m_Gate {
 public:
   void _circuitUpdate() override final;
 
 public:
-  XorGate(Vector2 pos, const Chars &text = GateName::NAND)
-      : m_Gate(pos, text, 2, 1, false) {}
+  XorGate(Vector2 pos);
 };
 
 // Here are the functions
@@ -243,25 +218,23 @@ public: // Functions
   void _circuitUpdate() override final;
 
 public: // Constructors
-  Light(Vector2 pos, const Chars &text = GateName::LIGHT)
-      : m_Gate(pos, text, 1, 0, false) {}
+  Light(Vector2 pos);
 
 private:
-  bool _isOn()const; // Check if the the light is turns on or not.
+  bool _isOn() const; // Check if the the light is turns on or not.
 };
 
 class Switch : public m_Gate {
 private:
   bool _isOn;
-  void _eventUpdate(const GGS& tc) override final;
+  void _eventUpdate(const GGS &tc) override final;
 
 public:
   void draw(const GGS &tc) const override final;
   void _circuitUpdate() override final;
 
 public: // Constructor
-  Switch(Vector2 pos, const Chars &text = GateName::SWITCH)
-      : m_Gate(pos, 60, text, 0, 1, false) {}
+  Switch(Vector2 pos);
 };
 enum class ClkTriggerS {
   up,

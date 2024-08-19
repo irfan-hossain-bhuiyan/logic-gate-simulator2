@@ -1,9 +1,13 @@
 #pragma once
+#include <cstddef>
 #include <cstdint>
 #include <deque>
+#include <iostream>
 #include <memory>
+#include <ostream>
 #include <raylib.h>
 #include <raymath.h>
+#include <sstream>
 #include <string>
 #include <utility>
 using i32 = int;
@@ -15,6 +19,8 @@ using usize = uintptr_t;
 using std::make_unique;
 using std::unique_ptr;
 
+struct endl {};
+static endl end;
 template <typename T> using Vec = std::vector<T>;
 template <typename T> using Box = std::unique_ptr<T>;
 template <typename T> using Rc = std::shared_ptr<T>;
@@ -26,7 +32,7 @@ enum class ErrorS {
   ITEMNOTFOUND_ERROR,
   OK,
 };
-const float DEFAULT_FONT_SIZE=13.0;
+const float DEFAULT_FONT_SIZE = 13.0;
 class Chars {
   using CharArray = std::array<char, CHARS_MAX_SIZE>;
   // Chars are array of character,That are stack allocated,Each heap allocated
@@ -111,31 +117,54 @@ Vector2 rectCenter(Rectangle rect);
 
 void DrawRectangleGradientHRec(Rectangle rect, Color color1, Color color2);
 void DrawCircleLinesCir(Circle cir, Color color, float width);
-void drawText(std::string text, Vector2 position, float fontSize = DEFAULT_FONT_SIZE,
-              Color color = BLACK);
+void drawText(const std::string &text, Vector2 position,
+              float fontSize = DEFAULT_FONT_SIZE, Color color = BLACK);
 
-void drawText(const Chars &text, Vector2 position, float fontSize = DEFAULT_FONT_SIZE,
-              Color color = BLACK);
-RectSize measureText(const Chars& text,float fontSize=DEFAULT_FONT_SIZE,float spacing=0);
+void drawText(const Chars &text, Vector2 position,
+              float fontSize = DEFAULT_FONT_SIZE, Color color = BLACK);
+RectSize measureText(const Chars &text, float fontSize = DEFAULT_FONT_SIZE,
+                     float spacing = 0);
 template <typename T> class BoundedQueue {
 public:
   BoundedQueue(size_t max_size) : max_size(max_size) {}
 
   void push(T item);
-  usize size();
+  usize size() const;
   ErrorS pop();
-  auto begin();
-  auto end();
-  T at(usize x);
+  auto cbegin() const;
+  auto cend() const;
+  const T &at(usize x) const;
 
 private:
   std::deque<T> queue;
   size_t max_size;
 };
+
+class StringQueue {
+private:
+  BoundedQueue<std::string> bq;
+  std::stringstream ss;
+
+public:
+  StringQueue(size_t maxSize) : bq(maxSize) {}
+  template <typename T> StringQueue &operator<<(const T &t) {
+    this->ss << t;
+    return *this;
+  }
+  usize size() const { return bq.size(); }
+  template <> StringQueue &operator<<(const endl &t) {
+    bq.push(ss.str());
+    ss.str("");
+    ss.clear();
+    return *this;
+  }
+  const std::string &at(usize i) const { return bq.at(i); }
+};
+
 RectSize textSize(const Chars &text, float size);
 enum class TextPositionS;
-Vector2 textPosition(Rectangle rect, const Chars &text, float fontSize = DEFAULT_FONT_SIZE,
-                     float border = 3);
+Vector2 textPosition(Rectangle rect, const Chars &text,
+                     float fontSize = DEFAULT_FONT_SIZE, float border = 3);
 Vector2 textPosition(Rectangle rect, const Chars &text, TextPositionS textPos,
                      float fontSize = DEFAULT_FONT_SIZE, float border = 3);
 
@@ -155,3 +184,35 @@ std::vector<T> make_vector(Args &&...args) {
   (result.emplace_back(std::forward<Args>(args)), ...);
   return result;
 }
+template <typename T> void BoundedQueue<T>::push(T item) {
+  if (queue.size() == max_size) {
+    queue.pop_front();
+  }
+  queue.push_back(item);
+}
+template <typename T> usize BoundedQueue<T>::size() const {
+  return queue.size();
+}
+template <typename T> ErrorS BoundedQueue<T>::pop() {
+  if (queue.empty()) {
+    return ErrorS::OUTOFBOUND_ERROR;
+  }
+  queue.pop_front();
+  return ErrorS::OK;
+}
+template <typename T> auto BoundedQueue<T>::cbegin() const {
+  return queue.begin();
+}
+template <typename T> auto BoundedQueue<T>::cend() const { return queue.end(); }
+template <typename T> const T &BoundedQueue<T>::at(usize x) const {
+  return queue.at(x);
+}
+template <typename T>
+std::vector<T> vectorNemement(usize n, const std::function<T()> &func) {
+  std::vector<T> vec;
+  vec.reserve(n); // Reserve space to avoid reallocations
+  std::generate_n(std::back_inserter(vec), n, [func]() { return func(); });
+  return vec;
+}
+
+std::ostream &operator<<(std::ostream &os, const Vector2 &vec2);

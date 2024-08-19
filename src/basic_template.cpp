@@ -313,30 +313,6 @@ std::ostream &operator<<(std::ostream &os, const Chars &ch) {
   os << (ch.c_str());
   return os;
 }
-template <typename T> void BoundedQueue<T>::push(T item) {
-  if (queue.size() == max_size) {
-    queue.pop_front();
-  }
-  queue.push_back(item);
-}
-template <typename T> usize BoundedQueue<T>::size() { return queue.size(); }
-template <typename T> ErrorS BoundedQueue<T>::pop() {
-  if (queue.empty()) {
-    return ErrorS::OUTOFBOUND_ERROR;
-  }
-  queue.pop_front();
-  return ErrorS::OK;
-}
-template <typename T> auto BoundedQueue<T>::begin() { return queue.begin(); }
-template <typename T> auto BoundedQueue<T>::end() { return queue.end(); }
-template <typename T> T BoundedQueue<T>::at(usize x) { return queue.at(x); }
-template <typename T>
-std::vector<T> vectorNemement(usize n, const std::function<T()> &func) {
-  std::vector<T> vec;
-  vec.reserve(n); // Reserve space to avoid reallocations
-  std::generate_n(std::back_inserter(vec), n, [func]() { return func(); });
-  return vec;
-}
 //RectSize measureText(const Chars &text, float size) {
 //  using namespace Resource::Fonts;
 //  return MeasureTextEx(LUMITIVE_FONT, text.c_str(), size, 0);
@@ -368,7 +344,11 @@ Vector2 textPosition(Rectangle rect, const Chars &text, float size,
 }
 // Templates declaration
 template class BoundedQueue<Chars>;
-
+template class BoundedQueue<std::string>;
 RectSize measureText(const Chars& text,float fontSize,float spacing){
 	return MeasureTextEx(Resource::Fonts::LUMITIVE_FONT,text.c_str(),fontSize,spacing);
+}
+std::ostream& operator<<(std::ostream& os,const Vector2& vec2){
+	os<<"{ x:"<<vec2.x<<"y:"<<vec2.y<<"}";
+	return os;
 }

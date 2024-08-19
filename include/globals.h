@@ -11,7 +11,8 @@ void _init();
 
 namespace GameManager {
 void init();
-void tcUpdate();
+void update();
+void draw();
 enum class UsedCameraS {
   noCamera,
   gateCamera,
@@ -19,8 +20,7 @@ enum class UsedCameraS {
 Vector2 getScreenToWorld(Vector2 pos,const UsedCameraS camera);
 Vector2 getGlobalMousePosition(const UsedCameraS camera);
 namespace Debugger {
-void push_message(const Chars &&text);
-void push_message(const Chars &text);
+extern StringQueue messages;
 void draw();
 } // namespace Debugger
 namespace UI::Menu_Options {
@@ -61,7 +61,7 @@ const RectSize BAR_SIZE{70,35};
 void _stateInit(UIState); // Initilize all the variabe if the state changes.
 void _stateUpdate();
 void draw();
-void update();
+//void update();
 } // namespace UI
 namespace GateWindow {
 enum class MouseState {
@@ -71,7 +71,7 @@ enum class MouseState {
 Camera2D getCamera();
 bool isMouseState(MouseState mouseState);
 void draw();
-void update();
+//void update();
 void create_gate(const Chars &gate);
 } // namespace GateWindow
 } // namespace GameManager
