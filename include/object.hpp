@@ -1,6 +1,6 @@
 #pragma once
-#include "basic_template.h"
-#include "ui.h"
+#include "basic_template.hpp"
+#include "ui.hpp"
 #include <raylib.h>
 class Draggable : public Touchable {
 private:

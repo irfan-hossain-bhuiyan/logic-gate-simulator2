@@ -1,5 +1,5 @@
-#include "touch.h"
-#include "globals.h"
+#include "touch.hpp"
+#include "globals.hpp"
 #include <raylib.h>
 bool Touchable::is_touching(const GS &tc) const { return tc.isTouching(*this); }
 bool Touchable::is_selected(const GS &tc) const { return tc.isSelected(*this); }

@@ -1,7 +1,7 @@
 #pragma once
-#include "basic_template.h"
-#include "raylib.h"
-#include "touch.h"
+#include "basic_template.hpp"
+#include <raylib.h>
+#include "touch.hpp"
 #include <tuple>
 #include <utility>
 

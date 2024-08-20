@@ -1,6 +1,6 @@
-#include "object.h"
-#include "basic_template.h"
-#include "globals.h"
+#include "object.hpp"
+#include "basic_template.hpp"
+#include "globals.hpp"
 #include <raylib.h>
 
 bool Draggable::isDraggable() {

@@ -1,4 +1,4 @@
-#include "basic_template.h"
+#include "basic_template.hpp"
 #include <set>
 class GlobalState;
 class GateGlobalState;

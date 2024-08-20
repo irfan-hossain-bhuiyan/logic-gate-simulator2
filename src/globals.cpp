@@ -1,7 +1,7 @@
-#include "globals.h"
-#include "basic_template.h"
-#include "gate.h"
-#include "ui.h"
+#include "globals.hpp"
+#include "basic_template.hpp"
+#include "gate.hpp"
+#include "ui.hpp"
 #include <memory>
 #include <raylib.h>
 #include <raymath.h>

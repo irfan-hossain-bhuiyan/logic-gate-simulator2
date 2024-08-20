@@ -1,8 +1,8 @@
 #pragma once
-#include "basic_template.h"
-#include "globals.h"
-#include "object.h"
-#include "ui.h"
+#include "basic_template.hpp"
+#include "globals.hpp"
+#include "object.hpp"
+#include "ui.hpp"
 #include <raylib.h>
 #include <span>
 #include <unordered_set>

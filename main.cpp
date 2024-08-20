@@ -1,4 +1,4 @@
-#include "globals.h"
+#include "globals.hpp"
 #include "raylib.h"
 #include <cstddef>
 int main() {

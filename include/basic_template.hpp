@@ -4,6 +4,7 @@
 #include <deque>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <raylib.h>
 #include <raymath.h>
@@ -231,5 +232,11 @@ public:
     core[id] = object;
     return id;
   }
-  T &get(int id) { return core[id]; }
+  T &operator[](int id) { return core[id]; }
+  std::optional<T &> get(int id) {
+    if (core.count(id) == 0)
+      return std::optional<T &>();
+    T &obj = core[id];
+    return std::optional(obj);
+  }
 };

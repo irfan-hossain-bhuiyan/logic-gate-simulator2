@@ -1,6 +1,6 @@
-#include "basic_template.h"
-#include "globals.h"
-#include "ui.h"
+#include "basic_template.hpp"
+#include "globals.hpp"
+#include "ui.hpp"
 #include <algorithm>
 #include <cstring>
 #include <queue>

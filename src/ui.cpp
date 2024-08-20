@@ -1,7 +1,7 @@
-#include "ui.h"
-#include "basic_template.h"
-#include "globals.h"
-#include "raylib.h"
+#include "ui.hpp"
+#include "basic_template.hpp"
+#include "globals.hpp"
+#include <raylib.h>
 #include <algorithm>
 #include <cmath>
 #include <cstddef>

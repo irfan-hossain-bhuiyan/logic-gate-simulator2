@@ -1,5 +1,5 @@
 #pragma once
-#include "basic_template.h"
+#include "basic_template.hpp"
 #include <raylib.h>
 #include <raymath.h>
 namespace Resource {

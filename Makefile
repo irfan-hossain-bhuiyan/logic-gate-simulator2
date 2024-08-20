@@ -30,7 +30,7 @@ $(TARGET): $(OBJECTS)
 	$(CXX) $(CXXFLAGS)  $^ -lraylib -opengl -o $@
 
 # Compile .cpp files to .o files
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(INCLUDE_DIR)/%.h
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(INCLUDE_DIR)/%.hpp
 	@mkdir -p $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 $(MAIN_O):$(MAIN_CP)
