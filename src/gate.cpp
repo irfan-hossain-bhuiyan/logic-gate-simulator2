@@ -327,7 +327,7 @@ void m_Spline::draw() const {
 }
 template <GPs STATE>
 const Touchable::Id m_GatePoint<STATE>::checkPointCollision(Vector2 pos) const {
-  return CheckCollisionPointCircle(pos, _cir()) ? this->id : Id::Null;
+  return CheckCollisionPointCircle(pos, _cir()) ? this->id() : Id::Null;
 }
 template <GPs STATE> void m_GatePoint<STATE>::toggleState() {
   booleanState = !booleanState;
@@ -344,7 +344,7 @@ const Touchable::Id m_Gate::checkPointCollision(Vector2 pos) const {
     if (const Id t = x->checkPointCollision(pos))
       return t;
   if (CheckCollisionPointRec(pos, _rect()))
-    return this->id;
+    return this->id();
   return Id::Null;
 }
 template <GPs STATE>

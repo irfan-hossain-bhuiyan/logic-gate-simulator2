@@ -27,7 +27,7 @@ void Draggable::mouseMoveUpdate(const GS &gs) {
 }
 const Touchable::Id DraggableBox::checkPointCollision(Vector2 position) const {
   return CheckCollisionPointRec(position, rectFromPos(NodePos, rectSize))
-             ? this->id
+             ? this->id()
              : Id::Null;
 }
 void DraggableBox::draw(const GS &gs) const {

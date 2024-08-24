@@ -1,7 +1,8 @@
 #include "touch.hpp"
 #include "globals.hpp"
 #include <raylib.h>
-Touchable::Touchable(){}
+Touchable::Touchable() {}
+Touchable::Id Touchable::id() const { return _id; }
 bool Touchable::is_touching(const GS &tc) const { return tc.isTouching(*this); }
 bool Touchable::is_selected(const GS &tc) const { return tc.isSelected(*this); }
 bool Touchable::is_clicked(const GS &tc) const {
@@ -12,21 +13,21 @@ bool Touchable::is_clicked(const GS &tc) const {
                                                   // every frame it called.
 }
 
-Touchable::Touchable(Id id) : id(id) {}
+Touchable::Touchable(Id id) : _id(id) {}
 bool Touchable::is_clicking(const GS &tc) const {
   return is_touching(tc) && IsMouseButtonDown(MOUSE_BUTTON_LEFT);
 }
 
 bool UIGlobalState::hasSelected() const { return _lastSelected != IdT::Null; }
 bool UIGlobalState::isSelected(const Touchable &t) const {
-  return _lastSelected == t.id;
+  return _lastSelected == t.id();
 }
 bool UIGlobalState::isTouching(const Touchable &t) const {
-  return _touching == t.id;
+  return _touching == t.id();
 }
 
 Vector2 UIGlobalState::screenToWorldPos(Vector2 pos) const { return pos; }
-void UIGlobalState::toSelect(Touchable const &obj) { _lastSelected = obj.id; }
+void UIGlobalState::toSelect(Touchable const &obj) { _lastSelected = obj.id(); }
 
 Vector2 GS::getGlobalMousePosition() const {
   return screenToWorldPos(GetMousePosition());
@@ -56,12 +57,12 @@ Vector2 GateGlobalState::screenToWorldPos(Vector2 pos) const {
 
 bool GateGlobalState::hasSelected() const { return !_lastSelected.empty(); }
 bool GateGlobalState::isSelected(const Touchable &t) const {
-  return _lastSelected.find(t.id) != _lastSelected.end();
+  return _lastSelected.find(t.id()) != _lastSelected.end();
   // std::find(_lastSelected.begin(), _lastSelected.end(), &t)
   // !=_lastSelected.end();
 }
 bool GateGlobalState::isTouching(const Touchable &t) const {
-  return _touching == t.id;
+  return _touching == t.id();
 }
 bool GateGlobalState::_isSelected(const IdT idt) {
   return this->_lastSelected.count(idt) != 0;
@@ -77,7 +78,7 @@ void GateGlobalState::_toggleSelection() {
   }
 }
 void GateGlobalState::removeSelection(const Touchable &tc) {
-  _lastSelected.erase(tc.id);
+  _lastSelected.erase(tc.id());
 }
 void GateGlobalState::_toSelected(const IdT tc) { _lastSelected.insert(tc); }
 void GateGlobalState::_clearAllSelection() { _lastSelected.clear(); }

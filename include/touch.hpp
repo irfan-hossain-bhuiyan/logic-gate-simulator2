@@ -17,14 +17,15 @@ public:
   // Touchable(TouchableCollection *const tc);
   // Touchable(Touchable &) = delete;
   // Touchable(Touchable &&) = delete;
-  const Id id = Id::generateId();
   bool is_touching(const GS &) const;
   bool is_selected(const GS &) const;
   bool is_clicking(const GS &) const;
   bool is_clicked(const GS &) const;
+  Id id()const;
   //  void toSelected(const TC &) const;
 
 private:
+  const Id _id = Id::generateId();
   friend class GlobalState;
 };
 

@@ -1,5 +1,5 @@
 Today:
-1. 
+1. Change m_GatePoint so it doesn't contain Gate reference.
 
 
 Sometime:

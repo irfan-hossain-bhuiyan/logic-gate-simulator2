@@ -81,7 +81,7 @@ std::tuple<Chars, Color> InputBar::_rendered_text() {
   return std::tuple(text, BLACK);
 }
 const InputBar::Id InputBar::checkPointCollision(Vector2 pos) const {
-  return CheckCollisionPointRec(pos, rect) ? this->id : Id::Null;
+  return CheckCollisionPointRec(pos, rect) ? this->id() : Id::Null;
 }
 
 InputBar::InputBar(Rectangle rect, float fontSize)
@@ -118,14 +118,14 @@ void Label::draw(float linewidth) const {
   drawText(text, _textPos, fontSize, BLACK);
 }
 const Button::Id Button::checkPointCollision(Vector2 pos) const {
-  return CheckCollisionPointRec(pos, label.rect) ? this->id: Id::Null;
+  return CheckCollisionPointRec(pos, label.rect) ? this->id(): Id::Null;
 }
 void Button::draw(const UGS &tc) { label.draw(is_touching(tc) ? 2.0 : 1.0); }
 
 const SelectBar::Id SelectBar::checkPointCollision(Vector2 pos) const {
   Rectangle colrec = Rectangle{_position.x, _position.y, _rectSize.width,
                                _rectSize.height * float(options.size())};
-  return CheckCollisionPointRec(pos, colrec) ? this->id: Id::Null;
+  return CheckCollisionPointRec(pos, colrec) ? this->id(): Id::Null;
 }
 void SelectBar::draw(const UGS &tc) const {
   auto highlighted = options.size();
