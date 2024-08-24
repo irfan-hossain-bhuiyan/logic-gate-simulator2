@@ -1,13 +1,14 @@
 #include "object.hpp"
 #include "basic_template.hpp"
 #include "globals.hpp"
+#include "ui.hpp"
 #include <raylib.h>
 
 bool Draggable::isDraggable() {
   using GameManager::GateWindow::isMouseState;
   return isMouseState(GameManager::GateWindow::MouseState::editing);
 }
-void Draggable::mouseMoveUpdate(const GS & gs) {
+void Draggable::mouseMoveUpdate(const GS &gs) {
   using GameManager::UsedCameraS;
   { // Updating is_dragging and mouse_relative field feild
     if (is_clicked(gs) && isDraggable()) {
@@ -24,12 +25,12 @@ void Draggable::mouseMoveUpdate(const GS & gs) {
     NodePos = gs.getGlobalMousePosition() + mouseRelative;
   }
 }
-const Touchable *DraggableBox::checkPointCollision(Vector2 position)const {
+const Touchable::Id DraggableBox::checkPointCollision(Vector2 position) const {
   return CheckCollisionPointRec(position, rectFromPos(NodePos, rectSize))
-             ? (Touchable *)this
-             : nullptr;
+             ? this->id
+             : Id::Null;
 }
-void DraggableBox::draw(const GS& gs)const {
+void DraggableBox::draw(const GS &gs) const {
   Label(rectFromPos(NodePos, rectSize), label, color)
       .draw(is_clicking(gs) ? 3 : 1);
 }

@@ -32,7 +32,7 @@ public:
   void draw(const UGS &tc);
   void reset();
   Chars get_text();
-  const Touchable *checkPointCollision(Vector2 pos) const override;
+  const Id checkPointCollision(Vector2 pos) const override;
   friend class SearchBar;
 };
 class Label {
@@ -64,13 +64,13 @@ class Button : public Touchable {
 public:
   Label label;
 
-  const Touchable *checkPointCollision(Vector2 pos) const override;
+  const Id checkPointCollision(Vector2 pos) const override;
 private:
   void draw(const UGS &);
 
 public:
-  Button(Label label) : label(std::move(label)) {}
-  Button(Rectangle rect, const Chars &text) : label(rect, text) {}
+  Button(Label label); 
+  Button(Rectangle rect, const Chars &text);
 };
 class SelectBar : public Touchable {
 public:
@@ -87,7 +87,7 @@ public:
         _position(pos), _rectSize(rectSize) {}
 
 public:
-  const Touchable *checkPointCollision(Vector2 pos) const override;
+  const Id checkPointCollision(Vector2 pos) const override;
 
 private:
   const TextPositionS _textPosS;
@@ -122,5 +122,5 @@ public:
   void draw(const UGS &);
   void setPos(Vector2 pos);
   void toSelected(UGS &);
-  const Touchable *checkPointCollision(Vector2 pos) const override;
+  const Id checkPointCollision(Vector2 pos) const override;
 };

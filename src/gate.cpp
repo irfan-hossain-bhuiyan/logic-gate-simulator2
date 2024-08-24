@@ -7,7 +7,6 @@
 #include <raylib.h>
 #include <span>
 #include <unordered_set>
-
 m_Spline *m_Spline::CURRENT_SPLINE = nullptr;
 std::unordered_set<m_Spline *> m_Spline::SPLINES{};
 usize m_Gate::_inPointnr() const { return _inPoints.size(); }
@@ -129,6 +128,8 @@ template <GPs STATE> void GatePoint<STATE>::_update(const GGS &tc) {
     this->_onClick();
   }
 }
+
+using namespace GameManager;
 template <GPs STATE> void GatePoint<STATE>::_onClick() {
   if (!GateWindow::isMouseState(GateWindow::MouseState::editing))
     return;
@@ -287,7 +288,7 @@ void m_Gate::_init() {
   this->_resizePoint();
 }
 void m_Gate::update(const GGS &tc) {
-  using namespace GateWindow;
+  using namespace GameManager::GateWindow;
   if (this->is_clicked(tc) && isMouseState(MouseState::editing)) {
     _onClick();
   }
@@ -325,8 +326,8 @@ void m_Spline::draw() const {
                       SPLINE_THICKNESS - BORDER, color);
 }
 template <GPs STATE>
-const Touchable *m_GatePoint<STATE>::checkPointCollision(Vector2 pos) const {
-  return CheckCollisionPointCircle(pos, _cir()) ? this : nullptr;
+const Touchable::Id m_GatePoint<STATE>::checkPointCollision(Vector2 pos) const {
+  return CheckCollisionPointCircle(pos, _cir()) ? this->id : Id::Null;
 }
 template <GPs STATE> void m_GatePoint<STATE>::toggleState() {
   booleanState = !booleanState;
@@ -335,16 +336,16 @@ template <GPs STATE> void m_GatePoint<STATE>::toggleState() {
 template <GPs STATE> bool m_GatePoint<STATE>::_is_disconnected() const {
   return splines.empty();
 }
-const Touchable *m_Gate::checkPointCollision(Vector2 pos) const {
+const Touchable::Id m_Gate::checkPointCollision(Vector2 pos) const {
   for (auto &x : _inPoints)
-    if (const Touchable *t = x->checkPointCollision(pos))
+    if (const Id t = x->checkPointCollision(pos))
       return t;
   for (auto &x : _outPoints)
-    if (const Touchable *t = x->checkPointCollision(pos))
+    if (const Id t = x->checkPointCollision(pos))
       return t;
   if (CheckCollisionPointRec(pos, _rect()))
-    return this;
-  return nullptr;
+    return this->id;
+  return Id::Null;
 }
 template <GPs STATE>
 m_Spline *m_GatePoint<STATE>::get_spline() const
@@ -518,29 +519,29 @@ void ClkPulse::draw(const GGS &tc) const {
 }
 m_Gate::m_Gate(Vector2 pos, const Chars &text, usize inPointnrMin,
                usize outPointnrMin, bool dynamicInput)
-    : Draggable(pos), _inPointnrMin(inPointnrMin), _outPointnr(outPointnrMin),
-      _dynamicInput(dynamicInput), gateName(text) {
+    : Draggable(pos), gateName(text), _inPointnrMin(inPointnrMin),
+      _outPointnr(outPointnrMin), _dynamicInput(dynamicInput) {
   _init();
 }
 m_Gate::m_Gate(Vector2 pos, float width, float minHeight, const Chars &text,
                usize inPointnrMin, usize outPointnrMin, bool dynamicInput)
-    : Draggable(pos), _inPointnrMin(inPointnrMin), _outPointnr(outPointnrMin),
-      _width(width), _minHeight(minHeight), _dynamicInput(dynamicInput),
-      gateName(text) {
+    : Draggable(pos), gateName(text), _inPointnrMin(inPointnrMin),
+      _outPointnr(outPointnrMin), _width(width), _minHeight(minHeight),
+      _dynamicInput(dynamicInput) {
   _init();
 }
 m_Gate::m_Gate(Vector2 pos, float width, const Chars &text, usize inPointnrMin,
                usize outPointnrMin, bool dynamicInput)
-    : Draggable(pos), _inPointnrMin(inPointnrMin), _outPointnr(outPointnrMin),
-      _width(width), _dynamicInput(dynamicInput), gateName(text) {
+    : Draggable(pos), gateName(text), _inPointnrMin(inPointnrMin),
+      _outPointnr(outPointnrMin), _width(width), _dynamicInput(dynamicInput) {
   _init();
 }
 m_Gate::m_Gate(Vector2 pos, float width, float minHeight, const Chars &text,
                bool dynamicInput, std::initializer_list<const Chars> inputText,
                std::initializer_list<const Chars> outputText)
-    : Draggable(pos), _inPointnrMin(inputText.size()),
-      _outPointnr(outputText.size()), _width(width), _minHeight(minHeight),
-      _dynamicInput(dynamicInput), gateName(text) {
+    : Draggable(pos), gateName(text),
+      _inPointnrMin(inputText.size()), _outPointnr(outputText.size()), _width(width),
+      _minHeight(minHeight), _dynamicInput(dynamicInput) {
   _init(inputText, outputText);
 }
 AndGate::AndGate(Vector2 pos)

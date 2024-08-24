@@ -240,3 +240,19 @@ public:
     return std::optional(obj);
   }
 };
+
+template <typename T> struct Id {
+  static inline const Id Null = Id{._core = 0};
+  u64 _core;
+  bool operator==(const Id &) const = default;
+  const static Id<T> generateId() {
+    static u64 idNum = 1;
+    return Id<T>{._core = idNum++}; // Id with 0 will be null
+  }
+  bool isNull() const { return *this == Null; }
+  auto operator<=>(const Id &) const = default;
+  operator bool() const { return _core; }
+};
+// template<typename T>
+// const Id<T> Id<T>::Null=Id<T>{._core=0};
+template struct Id<std::string>;

@@ -5,13 +5,13 @@
 #include <memory>
 #include <raylib.h>
 #include <raymath.h>
+using IdT = Touchable::Id;
 namespace GameManager::GateWindow {
 GateGlobalState ggs;
 Vector2 arrowDirection;
 MouseState mouseState = MouseState::editing;
 [[nodiscard]] bool isMouseState(MouseState ms) { return ms == mouseState; }
 Gates gates;
-
 Camera2D camera2d;
 void _initGateCamera() {
   Vector2 middle =
@@ -119,14 +119,14 @@ void create_gate(const Chars &gateName) {
   }
   gates.push_back(std::move(gate));
 }
-const Touchable *_clickUpdate() {
+const Touchable::Id _clickUpdate() {
   for (auto x = gates.rbegin(); x != gates.rend(); x++) {
-    const Touchable *clicked = ggs.touchUpdate(**x);
-    if (clicked != nullptr) {
+    const Touchable::Id clicked = ggs.touchUpdate(**x);
+    if (clicked.isNull() == false) {
       return clicked;
     }
   }
-  return nullptr;
+  return Touchable::Id::Null;
 }
 
 } // namespace GameManager::GateWindow
@@ -239,7 +239,7 @@ void _stateInit(UIState currentState) {
     break;
   }
 }
-const Touchable *_clickUpdate() {
+const Touchable::Id _clickUpdate() {
   switch (currentState) {
   case UIState::NOTIHING:
     break;
@@ -253,7 +253,7 @@ const Touchable *_clickUpdate() {
   case UIState::DELETE:
     break;
   }
-  return nullptr;
+  return IdT::Null;
 }
 
 void draw() {
@@ -298,7 +298,7 @@ using UI::ui;
 void clickUpdate() {
 #pragma region uiClickUpdate
   {
-    bool uiTouched = UI::_clickUpdate() != nullptr;
+    bool uiTouched =! UI::_clickUpdate().isNull();
     UI::ugs.afterTouchUpdate();
     if (uiTouched)
       return;
@@ -307,7 +307,7 @@ void clickUpdate() {
 
 #pragma region gateClickUpdate
   {
-    bool gateTouched = GateWindow::_clickUpdate() != nullptr;
+    bool gateTouched =! GateWindow::_clickUpdate().isNull();
     GateWindow::ggs.afterTouchUpdate();
     if (gateTouched)
       return;

@@ -1,6 +1,5 @@
 #pragma once
 #include "basic_template.hpp"
-#include "globals.hpp"
 #include "object.hpp"
 #include "ui.hpp"
 #include <raylib.h>
@@ -36,7 +35,7 @@ private:
   Vector2 _world_pos() const;
   Circle _cir() const;
   bool _is_disconnected() const;
-  const Touchable *checkPointCollision(Vector2 pos) const override;
+  const Id checkPointCollision(Vector2 pos) const override;
   void _setRelativePos(Vector2 pos) { relativePos = pos; }
   void _update(const GGS &tc);
   void _onClick();
@@ -114,11 +113,11 @@ public:
   virtual void draw(const GGS &tc) const;
   ~m_Gate();
   void update(const GGS &tc);
-  const Touchable *checkPointCollision(Vector2 pos) const override;
+  const Id checkPointCollision(Vector2 pos) const override;
 
 protected:
   virtual void _circuitUpdate() = 0;
-  virtual void _eventUpdate(const GGS &tc) {};
+  virtual void _eventUpdate(const GGS &_) {};
 
   m_Gate(Vector2 pos, const Chars &text, usize inPointnrMin,
          usize outPointnrMin, bool dynamicInput);
@@ -167,7 +166,6 @@ private:
 protected:
   Rect _rect() const;
 };
-using namespace GameManager;
 class AndGate : public m_Gate {
 public:
   AndGate(Vector2 pos);

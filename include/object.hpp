@@ -24,6 +24,6 @@ public:
   DraggableBox(Vector2 position, RectSize rectSize = {30, 40},
                const Chars &label = "")
       : Draggable(position), rectSize(rectSize), label(label) {}
-  const Touchable* checkPointCollision(Vector2 position) const override;
+  const Id checkPointCollision(Vector2 position) const override;
   void draw(const GS& gs)const;
 };
