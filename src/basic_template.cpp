@@ -285,12 +285,12 @@ void DrawRectangleGradientHRec(Rectangle rect, Color color1, Color color2) {
 void drawText(const std::string &text, Vector2 position, float fontSize,
               Color color) {
   using namespace Resource::Fonts;
-  DrawTextEx(LUMITIVE_FONT, text.c_str(), position, fontSize, 0, color);
+  DrawTextEx(DEFAULT_FONT, text.c_str(), position, fontSize, 0, color);
 }
 void drawText(const Chars &text, Vector2 position, float fontSize,
               Color color) {
   using namespace Resource::Fonts;
-  DrawTextEx(LUMITIVE_FONT, text.c_str(), position, fontSize, 0, color);
+  DrawTextEx(DEFAULT_FONT, text.c_str(), position, fontSize, 0, color);
 }
 // Example usage:
 void DrawCircleLinesCir(Circle cir, Color color, float width) {
@@ -346,7 +346,7 @@ Vector2 textPosition(Rectangle rect, const Chars &text, float size,
 template class BoundedQueue<Chars>;
 template class BoundedQueue<std::string>;
 RectSize measureText(const Chars& text,float fontSize,float spacing){
-	return MeasureTextEx(Resource::Fonts::LUMITIVE_FONT,text.c_str(),fontSize,spacing);
+	return MeasureTextEx(Resource::Fonts::DEFAULT_FONT,text.c_str(),fontSize,spacing);
 }
 std::ostream& operator<<(std::ostream& os,const Vector2& vec2){
 	os<<"{ x:"<<vec2.x<<"y:"<<vec2.y<<"}";

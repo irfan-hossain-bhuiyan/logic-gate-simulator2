@@ -159,6 +159,8 @@ template <GPs STATE> void GatePoint<STATE>::_onClick() {
       attach(*this, *m_Spline::CURRENT_SPLINE);
       m_Spline::CURRENT_SPLINE = nullptr;
     }
+
+   // this->_gate.refresh();
   }
 }
 m_Spline::m_Spline(m_IGP *in_ptr, m_OGP *out_ptr)
@@ -301,6 +303,7 @@ void m_Gate::update(const GGS &tc) {
   for (auto &x : _outPoints) {
     x->_update(tc);
   }
+  _refresh();
 }
 bool m_Spline::mouse_empty() { return CURRENT_SPLINE == nullptr; }
 void m_Spline::SplinesDraw() {

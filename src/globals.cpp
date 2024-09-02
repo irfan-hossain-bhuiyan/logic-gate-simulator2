@@ -298,7 +298,7 @@ using UI::ui;
 void clickUpdate() {
 #pragma region uiClickUpdate
   {
-    bool uiTouched =! UI::_clickUpdate().isNull();
+    bool uiTouched = !UI::_clickUpdate().isNull();
     UI::ugs.afterTouchUpdate();
     if (uiTouched)
       return;
@@ -307,7 +307,7 @@ void clickUpdate() {
 
 #pragma region gateClickUpdate
   {
-    bool gateTouched =! GateWindow::_clickUpdate().isNull();
+    bool gateTouched = !GateWindow::_clickUpdate().isNull();
     GateWindow::ggs.afterTouchUpdate();
     if (gateTouched)
       return;
@@ -343,9 +343,11 @@ void update() {
 
 } // namespace GameManager
 void Resource::_init() {
-  Fonts::LUMITIVE_FONT = LoadFont("./Resources/fonts/luminova_bold.otf");
+  Fonts::DEFAULT_FONT = LoadFont("./Resources/fonts/robotoregular.ttf");
+  Fonts::DEFAULT_BOLD_FONT = LoadFont("./Resources/fonts/robotoBold.ttf");
   // Fonts::LUMITIVE_FONT=GetFontDefault();
 }
 
 // extern initilize
-Font Resource::Fonts::LUMITIVE_FONT{};
+Font Resource::Fonts::DEFAULT_FONT{};
+Font Resource::Fonts::DEFAULT_BOLD_FONT{};

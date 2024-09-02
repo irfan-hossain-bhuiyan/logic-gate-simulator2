@@ -4,7 +4,8 @@
 #include <raymath.h>
 namespace Resource {
 namespace Fonts {
-extern Font LUMITIVE_FONT;
+extern Font DEFAULT_FONT;
+extern Font DEFAULT_BOLD_FONT;
 }
 void _init();
 }; // namespace Resource

@@ -114,7 +114,7 @@ public:
   ~m_Gate();
   void update(const GGS &tc);
   const Id checkPointCollision(Vector2 pos) const override;
-
+  void _refresh();
 protected:
   virtual void _circuitUpdate() = 0;
   virtual void _eventUpdate(const GGS &_) {};
@@ -147,7 +147,6 @@ private:
   void _init();
   void _init(std::span<const Chars> inputText,
              std::span<const Chars> outputText);
-  void _refresh();
   void _resizePoint();
   void _clearPoint();
   float _inPointDistance() const;

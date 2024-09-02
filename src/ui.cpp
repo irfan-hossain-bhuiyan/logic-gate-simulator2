@@ -104,7 +104,7 @@ void InputBar::draw(const UGS &tc) {
   drawRectangleWithLines(rect, WHITE, BLACK, is_selected(tc) ? 2.0 : 1.0);
   auto textPos = textPosition(rect, text, textPositionS, _fontSize);
   RectSize rs =
-      MeasureTextEx(Resource::Fonts::LUMITIVE_FONT, text.c_str(), _fontSize, 0);
+      MeasureTextEx(Resource::Fonts::DEFAULT_FONT, text.c_str(), _fontSize, 0);
   // DrawTextEx(text, pos, _fontSize);
   using namespace Resource::Fonts;
   drawText(text, textPos, _fontSize);
