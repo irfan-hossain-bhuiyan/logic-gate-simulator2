@@ -1,3 +1,4 @@
+#pragma once
 #include "basic_template.hpp"
 #include <set>
 class GlobalState;
@@ -73,10 +74,9 @@ private:
 private:
   void _toggleSelection();
   void _clearAllSelection();
-  void _toSelected(const IdT);
   void _removeSelection(const IdT);
   bool _isSelected(const IdT);
-
+  void _toSelected(const IdT);
 public:
   void frameInit() override final;
   const IdT touchUpdate(
@@ -88,6 +88,7 @@ public:
                            // selection.
 
   bool hasSelected() const override final;
+  void toSelected(const Touchable&);
   void removeSelection(const Touchable &);
   bool isSelected(const Touchable &obj) const override final;
   bool isTouching(const Touchable &obj) const override final;

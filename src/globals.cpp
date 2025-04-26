@@ -5,6 +5,7 @@
 #include <memory>
 #include <raylib.h>
 #include <raymath.h>
+#include <stdexcept>
 using IdT = Touchable::Id;
 namespace GameManager::GateWindow {
 GateGlobalState ggs;
@@ -32,6 +33,19 @@ void _deleteGate() {
       return;
   }
   Debugger::messages << "Not all elements can be deleted." << end;
+}
+inline const Vector2 DUPLICATE_GATE_OFFSET = {5, 10};
+void _duplicateGate() {
+  auto gateSize = gates.size();
+  for (usize i = 0; i < gateSize; i++) {
+    auto &x = gates[i];
+    if (GateWindow::ggs.isSelected(*x.get())) {
+      ggs.removeSelection(*x.get());
+      auto &newGate =
+          createGate(x->gateName, x->NodePos + DUPLICATE_GATE_OFFSET);
+      ggs.toSelected(*newGate.get());
+    }
+  }
 }
 
 Camera2D getCamera() { return camera2d; }
@@ -86,38 +100,42 @@ void objectUpdate() {
   }
   m_Spline::signalPasses();
 }
-void create_gate(const Chars &gateName) {
+Gate &createGate(const Chars &gateName, Vector2 createPos) {
   using namespace GateName;
   using std::make_unique;
   Gate gate;
-  auto mouseGlobalPos = getGlobalMousePosition(UsedCameraS::gateCamera);
   if (gateName == AND) {
-    gate = make_unique<AndGate>(mouseGlobalPos);
+    gate = make_unique<AndGate>(createPos);
   } else if (gateName == OR) {
-    gate = make_unique<OrGate>(mouseGlobalPos);
+    gate = make_unique<OrGate>(createPos);
   } else if (gateName == NOT) {
-    gate = make_unique<NotGate>(mouseGlobalPos);
+    gate = make_unique<NotGate>(createPos);
   } else if (gateName == NOR) {
-    gate = make_unique<NorGate>(mouseGlobalPos);
+    gate = make_unique<NorGate>(createPos);
   } else if (gateName == NAND) {
-    gate = make_unique<NAndGate>(mouseGlobalPos);
+    gate = make_unique<NAndGate>(createPos);
   } else if (gateName == XOR) {
-    gate = make_unique<XorGate>(mouseGlobalPos);
+    gate = make_unique<XorGate>(createPos);
   } else if (gateName == LIGHT) {
-    gate = make_unique<Light>(mouseGlobalPos);
+    gate = make_unique<Light>(createPos);
   } else if (gateName == SWITCH) {
-    gate = make_unique<Switch>(mouseGlobalPos);
+    gate = make_unique<Switch>(createPos);
   } else if (gateName == RS_FF) {
-    gate = make_unique<RSff>(mouseGlobalPos);
+    gate = make_unique<RSff>(createPos);
   } else if (gateName == JK_FF) {
-    gate = make_unique<JKff>(mouseGlobalPos);
+    gate = make_unique<JKff>(createPos);
   } else if (gateName == CLK_PULSE) {
-    gate = make_unique<ClkPulse>(mouseGlobalPos);
+    gate = make_unique<ClkPulse>(createPos);
   } else {
-    // Debugger::messages << "Gate name is not addressed." <<end;
-    return;
+    throw std::logic_error("Gate is not found.");
   }
   gates.push_back(std::move(gate));
+  return gates.back();
+}
+
+Gate &createGateinMouse(const Chars &gateName) {
+  auto mouseGlobalPos = getGlobalMousePosition(UsedCameraS::gateCamera);
+  return createGate(gateName, mouseGlobalPos);
 }
 const Touchable::Id _clickUpdate() {
   for (auto x = gates.rbegin(); x != gates.rend(); x++) {
@@ -158,6 +176,7 @@ Vec<Chars> _menuBar() {
     ans.push_back(CREATE);
     if (GateWindow::ggs.hasSelected()) {
       ans.push_back(DELETE);
+      ans.push_back(COPY);
     }
     ans.push_back(MOUSE_TOGGLE);
   } else if (isMouseState(MouseState::running)) {
@@ -167,7 +186,7 @@ Vec<Chars> _menuBar() {
 }
 using namespace GameManager::GateName;
 using namespace Menu_Options;
-SelectBar _selectBar(Vector2{0, 0}, _menuBar(), BAR_SIZE, 14,
+SelectBar _selectBar(Vector2{0, 0}, _menuBar(), BAR_SIZE, 20,
                      TextPositionS::center);
 SearchBar _searchBar(Vector2{0, 0}, GATES_NAME);
 std::array<Touchable *, 2> ui = {&_selectBar, &_searchBar};
@@ -188,6 +207,8 @@ UIState _nextState(UIState current_state) {
           return UIState::MOUSE_CHANGE;
         } else if (selectedOption == DELETE) {
           return UIState::DELETE;
+        } else if (selectedOption == COPY) {
+          return UIState::COPY;
         }
       } else {
         return UIState::NOTIHING;
@@ -197,7 +218,7 @@ UIState _nextState(UIState current_state) {
   case UIState::CREATE_MENU:
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
       if (auto selectedOption = _searchBar.getClick(ugs)) {
-        GateWindow::create_gate(selectedOption);
+        GateWindow::createGateinMouse(selectedOption);
         return UIState::NOTIHING; // To turn off the searchbar.
       } else {
         return UIState::NOTIHING; // Turn off if select elsewhere.
@@ -205,8 +226,8 @@ UIState _nextState(UIState current_state) {
     }
     break;
   case UIState::MOUSE_CHANGE:
-    return UIState::NOTIHING;
   case UIState::DELETE:
+  case UIState::COPY:
     return UIState::NOTIHING;
   }
   return current_state;
@@ -237,6 +258,9 @@ void _stateInit(UIState currentState) {
   case UIState::DELETE:
     GateWindow::_deleteGate();
     break;
+  case UIState::COPY:
+    GateWindow::_duplicateGate();
+    break;
   }
 }
 const Touchable::Id _clickUpdate() {
@@ -249,8 +273,8 @@ const Touchable::Id _clickUpdate() {
   case UIState::CREATE_MENU:
     return ugs.touchUpdate(_searchBar);
   case UIState::MOUSE_CHANGE:
-    break;
   case UIState::DELETE:
+  case UIState::COPY:
     break;
   }
   return IdT::Null;
@@ -266,24 +290,22 @@ void draw() {
   case UIState::CREATE_MENU:
     _searchBar.draw(ugs);
   case UIState::MOUSE_CHANGE:
-    break;
   case UIState::DELETE:
+  case UIState::COPY:
     break;
   }
 }
 
 void _objectUpdate() {
   switch (currentState) {
-  case UIState::NOTIHING: // Created this for exhaustic match.Like in rust.
-    break;
-  case UIState::MAIN_MENU:
-    break;
   case UIState::CREATE_MENU:
     _searchBar.CharUpdate(ugs); // SelectBar doesn't have update
     break;
+  case UIState::NOTIHING: // Created this for exhaustic match.Like in rust.
+  case UIState::MAIN_MENU:
   case UIState::MOUSE_CHANGE:
-    break;
   case UIState::DELETE:
+  case UIState::COPY:
     break;
   }
 }

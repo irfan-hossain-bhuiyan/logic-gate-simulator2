@@ -223,7 +223,7 @@ private:
 
 class Switch : public m_Gate {
 private:
-  bool _isOn;
+  bool _isOn=false;
   void _eventUpdate(const GGS &tc) override final;
 
 public:

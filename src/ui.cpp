@@ -114,7 +114,7 @@ Chars InputBar::get_text() { return input_text; }
 void Label::draw(float linewidth) const {
   DrawRectangleGradientHRec(rect, colorL, colorR);
   DrawRectangleLinesEx(rect, linewidth, BLACK);
-  Vector2 _textPos = textPosition(rect, text, textPos);
+  Vector2 _textPos = textPosition(rect, text, textPos,fontSize);
   drawText(text, _textPos, fontSize, BLACK);
 }
 const Button::Id Button::checkPointCollision(Vector2 pos) const {

@@ -81,6 +81,7 @@ void GateGlobalState::removeSelection(const Touchable &tc) {
   _lastSelected.erase(tc.id());
 }
 void GateGlobalState::_toSelected(const IdT tc) { _lastSelected.insert(tc); }
+void GateGlobalState::toSelected(const Touchable& to) { _lastSelected.insert(to.id()); }
 void GateGlobalState::_clearAllSelection() { _lastSelected.clear(); }
 void GateGlobalState::afterTouchUpdate() {
   if (!IsMouseButtonPressed(MOUSE_BUTTON_LEFT))

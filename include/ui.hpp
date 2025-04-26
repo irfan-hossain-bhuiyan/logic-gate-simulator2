@@ -6,6 +6,7 @@
 #include <utility>
 
 enum class TextPositionS { left, right, center };
+inline const float DEFAULT_UI_FONT_SIZE=20;
 class InputBar : Touchable {
 private:
   Rectangle rect;
@@ -13,7 +14,7 @@ private:
   Chars ref_text = "";
   Color ref_text_color = GRAY;
   int cursor_position = 0;
-  float _fontSize = DEFAULT_FONT_SIZE;
+  float _fontSize = DEFAULT_UI_FONT_SIZE;
   void _cursor_move_right();
   void _cursor_move_left();
   void _erase_front_char();
@@ -24,9 +25,9 @@ private:
 
 public:
   TextPositionS textPositionS = TextPositionS::left;
-  InputBar(Rectangle rect, float fontSize = DEFAULT_FONT_SIZE);
+  InputBar(Rectangle rect, float fontSize = DEFAULT_UI_FONT_SIZE);
   InputBar(Rectangle rect, const Chars &ref_text,
-           float fontSize = DEFAULT_FONT_SIZE);
+           float fontSize = DEFAULT_UI_FONT_SIZE);
   InputBar(float x, float y, float width, float height);
   bool TextUpdate(const UGS &tc);
   void draw(const UGS &tc);
@@ -42,7 +43,7 @@ public:
   TextPositionS textPos;
   Color colorL = WHITE;
   Color colorR = GRAY;
-  float fontSize = DEFAULT_FONT_SIZE;
+  float fontSize = DEFAULT_UI_FONT_SIZE;
   float border = 3;
   void draw(float linewidth) const;
   Label(Rectangle rect, const Chars &text,
@@ -76,12 +77,12 @@ class SelectBar : public Touchable {
 public:
   Vec<Chars> options;
   SelectBar(Vector2 pos, Vec<Chars> &&options, float width, float height,
-            float fontSize = DEFAULT_FONT_SIZE,
+            float fontSize = DEFAULT_UI_FONT_SIZE,
             TextPositionS textPosS = TextPositionS::center)
       : options(options), _textPosS(textPosS), _fontSize(fontSize),
         _position(pos), _rectSize(width, height) {}
   SelectBar(Vector2 pos, Vec<Chars> options, RectSize rectSize,
-            float fontSize = DEFAULT_FONT_SIZE,
+            float fontSize = DEFAULT_UI_FONT_SIZE,
             TextPositionS textPosS = TextPositionS::center)
       : options(std::move(options)), _textPosS(textPosS), _fontSize(fontSize),
         _position(pos), _rectSize(rectSize) {}
@@ -110,8 +111,8 @@ private:
 
 public:
   SearchBar(Vector2 position, const Vec<Chars> &options,
-            float fontSize = DEFAULT_FONT_SIZE, float width = 50,
-            float height = 30)
+            float fontSize = DEFAULT_UI_FONT_SIZE, float width = 60,
+            float height = 40)
       : ib(rectFromPos(position, width, height), fontSize),
         sb(position + Vector2{0, height}, Vec<Chars>(options), width, height),
         options(options), filtered_options(options) {

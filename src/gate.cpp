@@ -160,7 +160,7 @@ template <GPs STATE> void GatePoint<STATE>::_onClick() {
       m_Spline::CURRENT_SPLINE = nullptr;
     }
 
-   // this->_gate.refresh();
+    // this->_gate.refresh();
   }
 }
 m_Spline::m_Spline(m_IGP *in_ptr, m_OGP *out_ptr)
@@ -321,12 +321,12 @@ void m_Spline::draw() const {
                      : getGlobalMousePosition(UsedCameraS::gateCamera);
   auto color =
       _out_ptr != nullptr ? (_out_ptr->booleanState ? RED : WHITE) : WHITE;
-  DrawLineBezierCubic(in_pos, out_pos, in_pos + Vector2{-BEZIER_POINT, 0},
-                      out_pos + Vector2{BEZIER_POINT, 0}, SPLINE_THICKNESS,
-                      BLACK);
-  DrawLineBezierCubic(in_pos, out_pos, in_pos + Vector2{-BEZIER_POINT, 0},
-                      out_pos + Vector2{BEZIER_POINT, 0},
-                      SPLINE_THICKNESS - BORDER, color);
+  DrawSplineSegmentBezierCubic(in_pos, in_pos + Vector2{-BEZIER_POINT, 0},
+                               out_pos + Vector2{BEZIER_POINT, 0}, out_pos,
+                               SPLINE_THICKNESS, BLACK);
+  DrawSplineSegmentBezierCubic(in_pos, in_pos + Vector2{-BEZIER_POINT, 0},
+                               out_pos + Vector2{BEZIER_POINT, 0}, out_pos,
+                               SPLINE_THICKNESS - BORDER, color);
 }
 template <GPs STATE>
 const Touchable::Id m_GatePoint<STATE>::checkPointCollision(Vector2 pos) const {
@@ -542,32 +542,21 @@ m_Gate::m_Gate(Vector2 pos, float width, const Chars &text, usize inPointnrMin,
 m_Gate::m_Gate(Vector2 pos, float width, float minHeight, const Chars &text,
                bool dynamicInput, std::initializer_list<const Chars> inputText,
                std::initializer_list<const Chars> outputText)
-    : Draggable(pos), gateName(text),
-      _inPointnrMin(inputText.size()), _outPointnr(outputText.size()), _width(width),
-      _minHeight(minHeight), _dynamicInput(dynamicInput) {
+    : Draggable(pos), gateName(text), _inPointnrMin(inputText.size()),
+      _outPointnr(outputText.size()), _width(width), _minHeight(minHeight),
+      _dynamicInput(dynamicInput) {
   _init(inputText, outputText);
 }
-AndGate::AndGate(Vector2 pos)
-    : m_Gate(pos, GateName::AND, 2, 1, true) {}
-OrGate::OrGate(Vector2 pos)
-    : m_Gate(pos, GateName::OR, 2, 1, true) {}
+AndGate::AndGate(Vector2 pos) : m_Gate(pos, GateName::AND, 2, 1, true) {}
+OrGate::OrGate(Vector2 pos) : m_Gate(pos, GateName::OR, 2, 1, true) {}
 
-NotGate::NotGate(Vector2 pos)
-      : m_Gate(pos, GateName::NOT, 1, 1, false){}
+NotGate::NotGate(Vector2 pos) : m_Gate(pos, GateName::NOT, 1, 1, false) {}
 
-NorGate::NorGate(Vector2 pos)
-      : m_Gate(pos, GateName::NOR, 2, 1, true) {}
+NorGate::NorGate(Vector2 pos) : m_Gate(pos, GateName::NOR, 2, 1, true) {}
 
+NAndGate::NAndGate(Vector2 pos) : m_Gate(pos, GateName::NAND, 2, 1, true) {}
+XorGate::XorGate(Vector2 pos) : m_Gate(pos, GateName::XOR, 2, 1, false) {}
 
-NAndGate::NAndGate(Vector2 pos)
-      : m_Gate(pos, GateName::NAND, 2, 1, true) {}
-XorGate::XorGate(Vector2 pos)
-      : m_Gate(pos, GateName::XOR, 2, 1, false) {}
+Light::Light(Vector2 pos) : m_Gate(pos, 50, GateName::LIGHT, 1, 0, false) {}
 
-
-Light::Light(Vector2 pos)
-      : m_Gate(pos, 50, GateName::LIGHT, 1, 0, false) {}
-
-
-Switch::Switch(Vector2 pos)
-      : m_Gate(pos, 60, GateName::SWITCH, 0, 1, false) {}
+Switch::Switch(Vector2 pos) : m_Gate(pos, 60, GateName::SWITCH, 0, 1, false) {}

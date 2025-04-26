@@ -1,5 +1,6 @@
 #pragma once
 #include "basic_template.hpp"
+#include "gate.hpp"
 #include <raylib.h>
 #include <raymath.h>
 namespace Resource {
@@ -27,6 +28,7 @@ void draw();
 namespace UI::Menu_Options {
 const Chars MOUSE_TOGGLE = "RUN/EDIT";
 const Chars DELETE = "DELETE";
+const Chars COPY = "COPY";
 const Chars CREATE = "CREATE";
 // const Vec<Chars> MENU = {MOUSE_TOGGLE, DELETE, CREATE};
 } // namespace UI::Menu_Options
@@ -53,9 +55,10 @@ enum class UIState {
   CREATE_MENU,
   MOUSE_CHANGE,
   DELETE,
+  COPY
 };
 // calculated first,As they handle event.
-const RectSize BAR_SIZE{70,35};
+const RectSize BAR_SIZE{100,45};
 // namespace Options
 [[nodiscard]] UIState _nextState(UIState); // What will be the next state
                                            // of the ui given the current state
@@ -73,6 +76,7 @@ Camera2D getCamera();
 bool isMouseState(MouseState mouseState);
 void draw();
 //void update();
-void create_gate(const Chars &gate);
+Gate& createGateinMouse(const Chars &gate);
+Gate& createGate(const Chars & gate,Vector2 pos);
 } // namespace GateWindow
 } // namespace GameManager

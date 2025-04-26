@@ -2,7 +2,7 @@
 CXX = clang++
 
 # Compiler flags
-CXXFLAGS =  -std=c++20 -Iinclude -O0 -g
+CXXFLAGS =  -std=c++20 -Iinclude -O3 
 # Source directory
 SRC_DIR = src
 OBJ_DIR = obj
