@@ -2,6 +2,7 @@
 #include "globals.hpp"
 #include "ui.hpp"
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
 #include <queue>
 #include <raylib.h>
@@ -226,7 +227,8 @@ std::vector<std::string> fuzzySearch(const std::string &query,
   // Iterate through each word in the vector
   for (const std::string &word : vec) {
     int distance = levenshteinDistance(query, word);
-    if (distance <= threshold) {
+    int adjustedDistance = distance +query.size()-word.size();
+    if (adjustedDistance <= threshold) {
       // Invert the distance before inserting into the priority queue
       pq.push(std::make_pair(-distance, word));
     }
@@ -254,7 +256,8 @@ std::vector<Chars> fuzzySearch(const Chars &query,
   // Iterate through each word in the vector
   for (const Chars &word : vec) {
     int distance = levenshteinDistance(query, word);
-    if (distance <= threshold) {
+    int adjustedDistance = distance +query.length()-word.length();
+    if (adjustedDistance <= threshold) {
       // Invert the distance before inserting into the priority queue
       pq.push(std::make_pair(-distance, word));
     }
